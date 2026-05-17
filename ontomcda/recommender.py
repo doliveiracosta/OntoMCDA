@@ -46,15 +46,24 @@ def ontology_match(attr: str, problem_value: Optional[str], method_value: Option
     method = canon_value(attr, method_value)
 
     if attr == "tipo_variavel":
-        return tipo_variavel_match(str(problem), method), f"{problem} vs {method}"
+        return tipo_variavel_match(str(problem), method), str(method)
     if attr == "estrutura_decisoria":
         if method in {"MonoMulti", "Mono_Multi", "MonoMultiDecisor", "Mono/Multi"}:
-            return problem in {"Individual", "Grupo"}, f"{problem} vs {method}"
-        return problem == method, f"{problem} vs {method}"
+            return problem in {"Individual", "Grupo"}, str(method)
+        return problem == method, str(method)
     if attr == "compensatoriedade" and problem == "ParcialmenteCompensatorio":
-        return method in {"ParcialmenteCompensatorio", "Compensatorio", "NaoCompensatorio"}, f"{problem} vs {method}"
+        return method in {"ParcialmenteCompensatorio", "Compensatorio", "NaoCompensatorio"}, str(method)
 
-    return problem == method, f"{problem} vs {method}"
+    return problem == method, str(method)
+
+
+def readable_match(attr: str, match: Optional[bool], method_value: str) -> str:
+    label = ATTR_LABELS[attr]
+    if match is True:
+        return f"{label}: {method_value}"
+    if match is False:
+        return f"{label}: {method_value} (divergente)"
+    return f"{label}: atributo ausente na ontologia"
 
 
 def build_query_profile(premises: dict[str, Optional[str]], score_map: dict[str, int]) -> dict[str, dict[str, object]]:
@@ -116,7 +125,7 @@ def consult_ontology(
                 marks[attr] = "Nao"
             else:
                 marks[attr] = "-"
-            explanations.append(f"{ATTR_LABELS[attr]}: {explanation}")
+            explanations.append(readable_match(attr, match, explanation))
 
         if hard_fail:
             rejected.append({"Metodo": method_name, "Restricoes fortes violadas": ", ".join(hard_fail)})
