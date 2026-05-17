@@ -2,7 +2,7 @@
 
 Plataforma Streamlit para recomendacao explicavel de metodos multicriterio a partir de uma descricao textual do problema decisorio e da ontologia `OntoMCDA_v2.owl`.
 
-Proprietario: David de Oliveira Costa.
+Desenvolvido por David de Oliveira Costa.
 
 ## O que a plataforma faz
 
@@ -23,6 +23,8 @@ ontomcda_app.py
 
 ```text
 data/OntoMCDA_v2.owl
+assets/logo_upe_poli.png
+assets/logo_ppgec.png
 ontomcda/
 ontomcda_app.py
 requirements.txt

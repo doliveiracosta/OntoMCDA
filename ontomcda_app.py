@@ -26,13 +26,28 @@ def example_text() -> str:
     )
 
 
-def main() -> None:
-    st.set_page_config(page_title=APP_NAME, layout="wide")
+def render_opening_cover() -> None:
+    logo_poli = Path("assets/logo_upe_poli.png")
+    logo_ppgec = Path("assets/logo_ppgec.png")
+    if logo_poli.exists() and logo_ppgec.exists():
+        poli_col, ppgec_col, _ = st.columns([1.1, 1.7, 3.8])
+        with poli_col:
+            st.image(str(logo_poli), use_container_width=True)
+        with ppgec_col:
+            st.image(str(logo_ppgec), use_container_width=True)
+
     st.title(APP_NAME)
     st.markdown(f"**{APP_OWNER_LABEL}**")
-    st.caption("Recomendacao explicavel de metodos multicriterio a partir de descricao textual e fundamentados por ontologia OWL e PLN")
+    st.caption("Recomendacao explicavel de metodos multicriterio a partir de descricao textual e ontologia OWL.")
+
+
+def main() -> None:
+    st.set_page_config(page_title=APP_NAME, layout="wide")
+    render_opening_cover()
     st.info(
-        )
+        "Versao publica de pesquisa: nao insira dados pessoais, sigilosos ou sensiveis. "
+        "A recomendacao e um apoio metodologico e deve ser validada pelo pesquisador ou decisor."
+    )
 
     owl_path = Path(OWL_PATH)
     if not owl_path.exists():

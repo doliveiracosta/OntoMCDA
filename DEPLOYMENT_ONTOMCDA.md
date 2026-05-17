@@ -34,6 +34,8 @@ Use apenas os arquivos da pasta `github-upload-files-ontomcda-*` gerada localmen
 
 ```text
 .streamlit/config.toml
+assets/logo_upe_poli.png
+assets/logo_ppgec.png
 data/OntoMCDA_v2.owl
 ontomcda/
 ontomcda_app.py
