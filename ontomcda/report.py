@@ -9,7 +9,7 @@ from xml.sax.saxutils import escape
 
 import pandas as pd
 
-from .constants import APP_NAME, APP_OWNER_LABEL, ATTR_LABELS
+from .constants import APP_NAME, APP_OWNER_LABEL, ATTR_LABELS, PREMISE_ATTRS
 
 
 def write_pdf_report(
@@ -60,9 +60,8 @@ def write_pdf_report(
 
     story.append(paragraph("2. Premissas inferidas", "Heading1"))
     premise_rows = [["Premissa", "Valor inferido"]]
-    for attr, value in premises.items():
-        if attr.startswith("_"):
-            continue
+    for attr in PREMISE_ATTRS:
+        value = premises.get(attr)
         premise_rows.append([ATTR_LABELS.get(attr, attr), value or "Nao inferido"])
     story.append(table(premise_rows, [6.5 * cm, 9.2 * cm]))
     story.append(Spacer(1, 10))

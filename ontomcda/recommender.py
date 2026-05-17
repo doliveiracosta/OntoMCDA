@@ -7,7 +7,7 @@ from typing import Optional
 
 import pandas as pd
 
-from .constants import ATTRS, ATTR_LABELS, ATTR_WEIGHTS, MANDATORY_QUERY_ATTRS
+from .constants import ATTRS, ATTR_LABELS, ATTR_WEIGHTS, MANDATORY_QUERY_ATTRS, PREMISE_ATTRS
 from .text_inference import canon_value, infer_premises
 
 
@@ -92,7 +92,7 @@ def consult_ontology(
 ) -> tuple[pd.DataFrame, pd.DataFrame]:
     accepted = []
     rejected = []
-    compared_attrs = [attr for attr in ATTRS if query_profile[attr]["value"] is not None]
+    compared_attrs = PREMISE_ATTRS
 
     for method_name, method_profile in profiles.items():
         hard_fail = []
@@ -103,10 +103,13 @@ def consult_ontology(
         marks = {}
         explanations = []
 
-        for attr in ATTRS:
+        for attr in PREMISE_ATTRS:
             query = query_profile[attr]
             query_value = query["value"]
             role = query["role"]
+            compared += 1
+            total_weight += ATTR_WEIGHTS.get(attr, 1.0)
+
             if query_value is None:
                 marks[attr] = "-"
                 continue
@@ -115,8 +118,6 @@ def consult_ontology(
             if role == "hard" and match is False:
                 hard_fail.append(ATTR_LABELS[attr])
 
-            compared += 1
-            total_weight += ATTR_WEIGHTS.get(attr, 1.0)
             if match is True:
                 attended += 1
                 attended_weight += ATTR_WEIGHTS.get(attr, 1.0)

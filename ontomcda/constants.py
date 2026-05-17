@@ -1,6 +1,6 @@
 """Constants used by the OntoMCDA recommendation engine."""
 
-APP_NAME = "OntoMCDA: Recomendador Semantico MCDA"
+APP_NAME = "OntoMCDA"
 APP_OWNER = "David de Oliveira Costa"
 APP_OWNER_LABEL = f"Desenvolvido por {APP_OWNER}, Doutorando em Engenharia de Computacao, 2026."
 OWL_PATH = "data/OntoMCDA_v2.owl"
@@ -22,6 +22,19 @@ ATTRS = [
     "gera_pesos",
     "auxilia_gerar_pesos",
     "sugere_pesos",
+]
+
+PREMISE_ATTRS = [
+    "tipo_problema",
+    "compensatoriedade",
+    "tipo_variavel",
+    "monotonicidade",
+    "estrutura_decisoria",
+    "completude_pref",
+    "ambiente_decisao",
+    "ponderabilidade",
+    "usa_pesos",
+    "requer_pesos",
 ]
 
 MANDATORY_QUERY_ATTRS = ["tipo_problema"]
