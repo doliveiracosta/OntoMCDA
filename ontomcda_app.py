@@ -27,10 +27,13 @@ def example_text() -> str:
 
 
 def render_opening_cover() -> None:
+    logo_upe = Path("assets/logo_upe.jfif")
     logo_poli = Path("assets/logo_upe_poli.png")
     logo_ppgec = Path("assets/logo_ppgec.png")
-    if logo_poli.exists() and logo_ppgec.exists():
-        poli_col, ppgec_col, _ = st.columns([1.1, 1.7, 3.8])
+    if logo_upe.exists() and logo_poli.exists() and logo_ppgec.exists():
+        upe_col, poli_col, ppgec_col, _ = st.columns([0.75, 1.15, 1.75, 3.25])
+        with upe_col:
+            st.image(str(logo_upe), use_container_width=True)
         with poli_col:
             st.image(str(logo_poli), use_container_width=True)
         with ppgec_col:
@@ -38,16 +41,15 @@ def render_opening_cover() -> None:
 
     st.title(APP_NAME)
     st.markdown(f"**{APP_OWNER_LABEL}**")
-    st.caption("Recomendacao explicavel de metodos multicriterio a partir de descricao textual e ontologia OWL.")
+    st.caption(
+        "Recomendacao explicavel de metodos multicriterio a partir de descricao textual, "
+        "fundamentada por PLN e ontologia."
+    )
 
 
 def main() -> None:
     st.set_page_config(page_title=APP_NAME, layout="wide")
     render_opening_cover()
-    st.info(
-        "Versao publica de pesquisa: nao insira dados pessoais, sigilosos ou sensiveis. "
-        "A recomendacao e um apoio metodologico e deve ser validada pelo pesquisador ou decisor."
-    )
 
     owl_path = Path(OWL_PATH)
     if not owl_path.exists():

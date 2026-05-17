@@ -2,7 +2,7 @@
 
 APP_NAME = "OntoMCDA: Recomendador Semantico MCDA"
 APP_OWNER = "David de Oliveira Costa"
-APP_OWNER_LABEL = f"Desenvolvido por {APP_OWNER}."
+APP_OWNER_LABEL = f"Desenvolvido por {APP_OWNER}, Doutorando em Engenharia de Computacao, 2026."
 OWL_PATH = "data/OntoMCDA_v2.owl"
 
 NEW_NS = "http://www.ontomcda.org/onto#"
