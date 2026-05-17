@@ -30,11 +30,9 @@ def main() -> None:
     st.set_page_config(page_title=APP_NAME, layout="wide")
     st.title(APP_NAME)
     st.markdown(f"**{APP_OWNER_LABEL}**")
-    st.caption("Recomendacao explicavel de metodos multicriterio a partir de descricao textual e ontologia OWL.")
+    st.caption("Recomendacao explicavel de metodos multicriterio a partir de descricao textual e fundamentados por ontologia OWL e PLN")
     st.info(
-        "Versao publica de pesquisa: nao insira dados pessoais, sigilosos ou sensiveis. "
-        "A recomendacao e um apoio metodologico e deve ser validada pelo pesquisador ou decisor."
-    )
+        )
 
     owl_path = Path(OWL_PATH)
     if not owl_path.exists():
