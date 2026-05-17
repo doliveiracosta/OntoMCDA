@@ -1,4 +1,4 @@
-# OntoMCDA: Recomendador Semantico MCDA
+# OntoMCDA
 
 Plataforma Streamlit para recomendacao explicavel de metodos multicriterio a partir de uma descricao textual do problema decisorio e da ontologia `OntoMCDA_v2.owl`.
 

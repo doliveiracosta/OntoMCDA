@@ -27,38 +27,98 @@ def example_text() -> str:
 
 
 def render_opening_cover() -> None:
+    st.markdown(
+        """
+        <style>
+        .institutional-logos {
+            display: flex;
+            align-items: center;
+            gap: 22px;
+            margin: 0.2rem 0 1.0rem;
+        }
+        .institutional-logos img {
+            object-fit: contain;
+            width: auto;
+            display: block;
+        }
+        .institutional-logos .logo-upe {
+            height: 42px;
+        }
+        .institutional-logos .logo-poli {
+            height: 54px;
+        }
+        .institutional-logos .logo-ppgec {
+            height: 48px;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
     logo_upe = Path("assets/logo_upe.jfif")
     logo_poli = Path("assets/logo_upe_poli.png")
     logo_ppgec = Path("assets/logo_ppgec.png")
     if logo_upe.exists() and logo_poli.exists() and logo_ppgec.exists():
-        upe_col, poli_col, ppgec_col, _ = st.columns([0.75, 1.15, 1.75, 3.25])
-        with upe_col:
-            st.image(str(logo_upe), use_container_width=True)
-        with poli_col:
-            st.image(str(logo_poli), use_container_width=True)
-        with ppgec_col:
-            st.image(str(logo_ppgec), use_container_width=True)
+        st.markdown(
+            """
+            <div class="institutional-logos">
+                <img class="logo-upe" src="assets/logo_upe.jfif" alt="UPE">
+                <img class="logo-poli" src="assets/logo_upe_poli.png" alt="POLI">
+                <img class="logo-ppgec" src="assets/logo_ppgec.png" alt="PPGEC">
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
     st.title(APP_NAME)
-    st.markdown(f"**{APP_OWNER_LABEL}**")
     st.caption(
         "Recomendacao explicavel de metodos multicriterio a partir de descricao textual, "
         "fundamentada por PLN e ontologia."
     )
+    st.markdown(f"**{APP_OWNER_LABEL}**")
 
     logo_orcid = Path("assets/logo_orcid.svg")
     logo_linkedin = Path("assets/logo_linkedin.svg")
     if logo_orcid.exists() and logo_linkedin.exists():
-        st.markdown("**Identidade academica e profissional do autor**")
-        orcid_icon, orcid_link, linkedin_icon, linkedin_link, _ = st.columns([0.18, 1.05, 0.18, 1.25, 3.34])
-        with orcid_icon:
-            st.image(str(logo_orcid), use_container_width=True)
-        with orcid_link:
-            st.markdown("[ORCID](https://orcid.org/0000-0002-6138-7451)")
-        with linkedin_icon:
-            st.image(str(logo_linkedin), use_container_width=True)
-        with linkedin_link:
-            st.markdown("[LinkedIn](https://www.linkedin.com/in/daviddeoliveiracosta)")
+        st.markdown(
+            """
+            <style>
+            .author-links {
+                display: flex;
+                align-items: center;
+                gap: 18px;
+                margin: 0.1rem 0 1.2rem;
+            }
+            .author-links a {
+                display: inline-flex;
+                align-items: center;
+                gap: 7px;
+                color: #6b7280;
+                text-decoration: none;
+                font-size: 0.92rem;
+            }
+            .author-links a:hover {
+                color: #374151;
+                text-decoration: none;
+            }
+            .author-links img {
+                width: 18px;
+                height: 18px;
+                display: inline-block;
+            }
+            </style>
+            <div class="author-links">
+                <a href="https://orcid.org/0000-0002-6138-7451" target="_blank">
+                    <img src="assets/logo_orcid.svg" alt="ORCID">
+                    <span>Perfil academico</span>
+                </a>
+                <a href="https://www.linkedin.com/in/daviddeoliveiracosta" target="_blank">
+                    <img src="assets/logo_linkedin.svg" alt="LinkedIn">
+                    <span>Perfil profissional</span>
+                </a>
+            </div>
+            """,
+            unsafe_allow_html=True,
+        )
 
 
 def main() -> None:
@@ -71,16 +131,13 @@ def main() -> None:
         return
 
     profiles = cached_profiles(str(owl_path))
-    ontology_col, mode_col = st.columns([1, 1])
-    ontology_col.metric("Perfis MCDA na ontologia", len(profiles))
-    mode_col.metric("Base de conhecimento", owl_path.name)
-
     text = st.text_area(
         "Descreva o problema decisorio",
         value=example_text(),
         height=190,
         help="Informe objetivo, tipo de decisao, dados disponiveis, incerteza, pesos e quantidade de decisores.",
     )
+    st.caption(f"Ontologia carregada: {len(profiles)} perfis MCDA | Base de conhecimento: {owl_path.name}")
     top_k = st.slider("Quantidade de metodos recomendados", min_value=5, max_value=30, value=15, step=5)
 
     if st.button("Analisar e recomendar", type="primary"):
