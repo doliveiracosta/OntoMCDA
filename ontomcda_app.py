@@ -232,14 +232,22 @@ def main() -> None:
         else:
             st.dataframe(result.rejected, use_container_width=True, hide_index=True)
 
+    pdf_kwargs = {
+        "problem_text": st.session_state.get("ontomcda_text", text),
+        "premises": result.premises,
+        "nlp_metrics": metrics,
+        "recommendations": result.accepted,
+    }
+    try:
+        report_data = pdf_bytes(**pdf_kwargs)
+    except TypeError:
+        # Compatibility with older deployed report.py versions that do not accept nlp_metrics yet.
+        pdf_kwargs.pop("nlp_metrics", None)
+        report_data = pdf_bytes(**pdf_kwargs)
+
     st.download_button(
         "Baixar relatorio PDF",
-        data=pdf_bytes(
-            problem_text=st.session_state.get("ontomcda_text", text),
-            premises=result.premises,
-            nlp_metrics=metrics,
-            recommendations=result.accepted,
-        ),
+        data=report_data,
         file_name="relatorio_ontomcda_recomendacao.pdf",
         mime="application/pdf",
         type="primary",
