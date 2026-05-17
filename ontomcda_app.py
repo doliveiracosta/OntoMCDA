@@ -237,7 +237,7 @@ def main() -> None:
         data=pdf_bytes(
             problem_text=st.session_state.get("ontomcda_text", text),
             premises=result.premises,
-            nlp_metrics=result.nlp_metrics,
+            nlp_metrics=metrics,
             recommendations=result.accepted,
         ),
         file_name="relatorio_ontomcda_recomendacao.pdf",
