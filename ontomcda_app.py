@@ -34,6 +34,27 @@ def asset_data_uri(path: Path) -> str:
     return f"data:{mime_type};base64,{encoded}"
 
 
+def fallback_nlp_metrics(result: object) -> dict[str, float | int]:
+    premises = getattr(result, "premises", {}) or {}
+    evidence = getattr(result, "evidence", {}) or {}
+    total_premises = len(PREMISE_ATTRS)
+    inferred_count = sum(1 for attr in PREMISE_ATTRS if premises.get(attr) is not None)
+    not_inferred_count = total_premises - inferred_count
+    evidence_count = sum(1 for attr in PREMISE_ATTRS if premises.get(attr) is not None and evidence.get(attr))
+    ics_pln = 0.0 if total_premises == 0 else 100.0 * inferred_count / total_premises
+    tni_pln = 0.0 if total_premises == 0 else 100.0 * not_inferred_count / total_premises
+    iet_pln = 0.0 if inferred_count == 0 else 100.0 * evidence_count / inferred_count
+    return {
+        "total_premises": total_premises,
+        "inferred_premises": inferred_count,
+        "not_inferred_premises": not_inferred_count,
+        "premises_with_evidence": evidence_count,
+        "ics_pln": round(ics_pln, 2),
+        "tni_pln": round(tni_pln, 2),
+        "iet_pln": round(iet_pln, 2),
+    }
+
+
 def render_opening_cover() -> None:
     st.markdown(
         """
@@ -160,6 +181,24 @@ def main() -> None:
         missing = ", ".join(ATTR_LABELS.get(attr, attr) for attr in result.missing_mandatory)
         st.warning(f"Nao foi possivel inferir premissas obrigatorias: {missing}. Reforce a descricao textual.")
 
+    st.divider()
+    st.subheader("Metricas quantitativas do PLN")
+    metrics = getattr(result, "nlp_metrics", fallback_nlp_metrics(result))
+    metric_cols = st.columns(4)
+    metric_cols[0].metric("ICS-PLN", f"{float(metrics['ics_pln']):.1f}%")
+    metric_cols[1].metric(
+        "Premissas inferidas",
+        f"{int(metrics['inferred_premises'])}/{int(metrics['total_premises'])}",
+    )
+    metric_cols[2].metric("TNI-PLN", f"{float(metrics['tni_pln']):.1f}%")
+    metric_cols[3].metric("IET-PLN", f"{float(metrics['iet_pln']):.1f}%")
+    st.caption(
+        "ICS-PLN = indice de cobertura semantica das premissas inferidas. "
+        "TNI-PLN = taxa de premissas nao inferidas. "
+        "IET-PLN = indice de evidencias textuais rastreaveis."
+    )
+
+    st.divider()
     summary_cols = st.columns(3)
     summary_cols[0].metric("Metodos recomendados", len(result.accepted))
     summary_cols[1].metric("Restricoes fortes violadas", len(result.rejected))
@@ -198,6 +237,7 @@ def main() -> None:
         data=pdf_bytes(
             problem_text=st.session_state.get("ontomcda_text", text),
             premises=result.premises,
+            nlp_metrics=result.nlp_metrics,
             recommendations=result.accepted,
         ),
         file_name="relatorio_ontomcda_recomendacao.pdf",
