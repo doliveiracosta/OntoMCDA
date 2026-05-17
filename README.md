@@ -26,6 +26,8 @@ data/OntoMCDA_v2.owl
 assets/logo_upe.jfif
 assets/logo_upe_poli.png
 assets/logo_ppgec.png
+assets/logo_orcid.svg
+assets/logo_linkedin.svg
 ontomcda/
 ontomcda_app.py
 requirements.txt

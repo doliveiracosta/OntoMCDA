@@ -37,6 +37,8 @@ Use apenas os arquivos da pasta `github-upload-files-ontomcda-*` gerada localmen
 assets/logo_upe.jfif
 assets/logo_upe_poli.png
 assets/logo_ppgec.png
+assets/logo_orcid.svg
+assets/logo_linkedin.svg
 data/OntoMCDA_v2.owl
 ontomcda/
 ontomcda_app.py

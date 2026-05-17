@@ -46,6 +46,20 @@ def render_opening_cover() -> None:
         "fundamentada por PLN e ontologia."
     )
 
+    logo_orcid = Path("assets/logo_orcid.svg")
+    logo_linkedin = Path("assets/logo_linkedin.svg")
+    if logo_orcid.exists() and logo_linkedin.exists():
+        st.markdown("**Identidade academica e profissional do autor**")
+        orcid_icon, orcid_link, linkedin_icon, linkedin_link, _ = st.columns([0.18, 1.05, 0.18, 1.25, 3.34])
+        with orcid_icon:
+            st.image(str(logo_orcid), use_container_width=True)
+        with orcid_link:
+            st.markdown("[ORCID](https://orcid.org/0000-0002-6138-7451)")
+        with linkedin_icon:
+            st.image(str(logo_linkedin), use_container_width=True)
+        with linkedin_link:
+            st.markdown("[LinkedIn](https://www.linkedin.com/in/daviddeoliveiracosta)")
+
 
 def main() -> None:
     st.set_page_config(page_title=APP_NAME, layout="wide")
