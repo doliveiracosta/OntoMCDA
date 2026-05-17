@@ -1,76 +1,91 @@
-"""Constants used by the OntoMCDA recommendation engine."""
+"""PDF export for OntoMCDA recommendations."""
 
-APP_NAME = "OntoMCDA"
-APP_OWNER = "David de Oliveira Costa"
-APP_OWNER_LABEL = f"Desenvolvido por {APP_OWNER}, Doutorando em Engenharia de Computacao, 2026."
-OWL_PATH = "data/OntoMCDA_v2.owl"
+from __future__ import annotations
 
-NEW_NS = "http://www.ontomcda.org/onto#"
-OLD_NS = "http://www.ontomcda.org/onto#OntologyMCDA#"
+from datetime import datetime
+from io import BytesIO
+from typing import BinaryIO
+from xml.sax.saxutils import escape
 
-ATTRS = [
-    "tipo_problema",
-    "compensatoriedade",
-    "tipo_variavel",
-    "monotonicidade",
-    "estrutura_decisoria",
-    "completude_pref",
-    "ambiente_decisao",
-    "ponderabilidade",
-    "usa_pesos",
-    "requer_pesos",
-    "gera_pesos",
-    "auxilia_gerar_pesos",
-    "sugere_pesos",
-]
+import pandas as pd
 
-MANDATORY_QUERY_ATTRS = ["tipo_problema"]
-DATA_ATTRS = {"usa_pesos", "requer_pesos", "gera_pesos", "auxilia_gerar_pesos", "sugere_pesos"}
+from .constants import APP_NAME, APP_OWNER_LABEL, ATTR_LABELS, PREMISE_ATTRS
 
-ATTR_LABELS = {
-    "tipo_problema": "Tipo de problema",
-    "compensatoriedade": "Compensatoriedade",
-    "tipo_variavel": "Tipo de variavel",
-    "monotonicidade": "Monotonicidade",
-    "estrutura_decisoria": "Estrutura decisoria",
-    "completude_pref": "Completude das preferencias",
-    "ambiente_decisao": "Ambiente de decisao",
-    "ponderabilidade": "Ponderabilidade",
-    "usa_pesos": "Usa pesos",
-    "requer_pesos": "Requer pesos",
-    "gera_pesos": "Gera pesos",
-    "auxilia_gerar_pesos": "Auxilia gerar pesos",
-    "sugere_pesos": "Sugere pesos",
-}
 
-ATTR_WEIGHTS = {
-    "tipo_problema": 4.0,
-    "compensatoriedade": 3.5,
-    "tipo_variavel": 3.0,
-    "monotonicidade": 2.0,
-    "estrutura_decisoria": 2.0,
-    "completude_pref": 1.5,
-    "ambiente_decisao": 2.0,
-    "ponderabilidade": 1.5,
-    "usa_pesos": 1.5,
-    "requer_pesos": 1.2,
-    "gera_pesos": 0.8,
-    "auxilia_gerar_pesos": 1.0,
-    "sugere_pesos": 0.5,
-}
+def write_pdf_report(
+    output: str | BinaryIO,
+    *,
+    problem_text: str,
+    premises: dict,
+    recommendations: pd.DataFrame,
+) -> None:
+    from reportlab.lib import colors
+    from reportlab.lib.pagesizes import A4
+    from reportlab.lib.styles import getSampleStyleSheet
+    from reportlab.lib.units import cm
+    from reportlab.platypus import Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
-ATTR_TO_PROP = {
-    "tipo_problema": ["temTipoProblema", "temTipoDeProblema"],
-    "compensatoriedade": ["temCompensatoriedade"],
-    "tipo_variavel": ["temTipoVariavel", "temTipoDeVariavel"],
-    "monotonicidade": ["temMonotonicidade", "suportaMonotonicidade"],
-    "estrutura_decisoria": ["temEstruturaDecisoria"],
-    "completude_pref": ["temCompletudePref"],
-    "ambiente_decisao": ["temAmbienteDecisao", "temAmbienteDeDecisao"],
-    "ponderabilidade": ["temPonderabilidade"],
-    "usa_pesos": ["usaPesos"],
-    "requer_pesos": ["requerPesos"],
-    "gera_pesos": ["geraPesos"],
-    "auxilia_gerar_pesos": ["auxiliaGerarPesos"],
-    "sugere_pesos": ["sugerePesos"],
-}
+    styles = getSampleStyleSheet()
+    doc = SimpleDocTemplate(output, pagesize=A4, rightMargin=1.5 * cm, leftMargin=1.5 * cm)
+    story = []
+
+    def paragraph(text: object, style: str = "Normal") -> Paragraph:
+        return Paragraph(escape(str(text)), styles[style])
+
+    def table(rows: list[list[object]], widths: list[float]) -> Table:
+        wrapped = [[paragraph(value) for value in row] for row in rows]
+        t = Table(wrapped, colWidths=widths, repeatRows=1)
+        t.setStyle(
+            TableStyle(
+                [
+                    ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#2e7d32")),
+                    ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+                    ("GRID", (0, 0), (-1, -1), 0.25, colors.grey),
+                    ("VALIGN", (0, 0), (-1, -1), "TOP"),
+                    ("FONTSIZE", (0, 0), (-1, -1), 8),
+                ]
+            )
+        )
+        return t
+
+    story.append(paragraph(APP_NAME, "Title"))
+    story.append(paragraph("Relatorio de recomendacao semantica de metodos multicriterio", "Heading2"))
+    story.append(paragraph(APP_OWNER_LABEL))
+    story.append(paragraph(f"Data de geracao: {datetime.now().strftime('%d/%m/%Y %H:%M')}"))
+    story.append(Spacer(1, 10))
+
+    story.append(paragraph("1. Descricao textual do problema", "Heading1"))
+    story.append(paragraph(problem_text or "Nao informado."))
+    story.append(Spacer(1, 10))
+
+    story.append(paragraph("2. Premissas inferidas", "Heading1"))
+    premise_rows = [["Premissa", "Valor inferido"]]
+    for attr in PREMISE_ATTRS:
+        value = premises.get(attr)
+        premise_rows.append([ATTR_LABELS.get(attr, attr), value or "Nao inferido"])
+    story.append(table(premise_rows, [6.5 * cm, 9.2 * cm]))
+    story.append(Spacer(1, 10))
+
+    story.append(paragraph("3. Metodos recomendados", "Heading1"))
+    if recommendations.empty:
+        story.append(paragraph("Nenhum metodo recomendado. Revise a descricao do problema."))
+    else:
+        rows = [["Metodo", "Aderencia", "Criterios", "Justificativa"]]
+        for _, row in recommendations.head(10).iterrows():
+            rows.append(
+                [
+                    row["Metodo"],
+                    f"{float(row['Aderencia(%)']):.1f}%",
+                    f"{row['Criterios atendidos']}/{row['Criterios comparados']}",
+                    row.get("Justificativa", ""),
+                ]
+            )
+        story.append(table(rows, [3.5 * cm, 2.0 * cm, 2.5 * cm, 7.7 * cm]))
+
+    doc.build(story)
+
+
+def pdf_bytes(**kwargs) -> bytes:
+    buffer = BytesIO()
+    write_pdf_report(buffer, **kwargs)
+    return buffer.getvalue()

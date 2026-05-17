@@ -9,7 +9,7 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from ontomcda.constants import APP_NAME, APP_OWNER_LABEL, ATTR_LABELS, OWL_PATH
+from ontomcda.constants import APP_NAME, APP_OWNER_LABEL, ATTR_LABELS, OWL_PATH, PREMISE_ATTRS
 from ontomcda.ontology import load_profiles
 from ontomcda.recommender import recommend_methods
 from ontomcda.report import pdf_bytes
@@ -168,7 +168,8 @@ def main() -> None:
 
     st.subheader("Premissas inferidas")
     premise_rows = []
-    for attr, value in result.premises.items():
+    for attr in PREMISE_ATTRS:
+        value = result.premises.get(attr)
         evidence = "; ".join(result.evidence.get(attr, []))
         premise_rows.append(
             {
