@@ -166,6 +166,22 @@ def main() -> None:
     top_score = 0.0 if result.accepted.empty else float(result.accepted.iloc[0]["Aderencia(%)"])
     summary_cols[2].metric("Maior aderencia", f"{top_score:.1f}%")
 
+    st.subheader("Metricas quantitativas do PLN")
+    metrics = result.nlp_metrics
+    metric_cols = st.columns(4)
+    metric_cols[0].metric("ICS-PLN", f"{float(metrics['ics_pln']):.1f}%")
+    metric_cols[1].metric(
+        "Premissas inferidas",
+        f"{int(metrics['inferred_premises'])}/{int(metrics['total_premises'])}",
+    )
+    metric_cols[2].metric("TNI-PLN", f"{float(metrics['tni_pln']):.1f}%")
+    metric_cols[3].metric("IET-PLN", f"{float(metrics['iet_pln']):.1f}%")
+    st.caption(
+        "ICS-PLN = indice de cobertura semantica das premissas inferidas. "
+        "TNI-PLN = taxa de premissas nao inferidas. "
+        "IET-PLN = indice de evidencias textuais rastreaveis."
+    )
+
     st.subheader("Premissas inferidas")
     premise_rows = []
     for attr in PREMISE_ATTRS:
@@ -198,6 +214,7 @@ def main() -> None:
         data=pdf_bytes(
             problem_text=st.session_state.get("ontomcda_text", text),
             premises=result.premises,
+            nlp_metrics=result.nlp_metrics,
             recommendations=result.accepted,
         ),
         file_name="relatorio_ontomcda_recomendacao.pdf",
