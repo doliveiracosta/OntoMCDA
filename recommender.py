@@ -16,6 +16,7 @@ class RecommendationResult:
     premises: dict[str, Optional[str]]
     evidence: dict[str, list[str]]
     query_profile: dict[str, dict[str, object]]
+    nlp_metrics: dict[str, float | int]
     accepted: pd.DataFrame
     rejected: pd.DataFrame
     missing_mandatory: list[str]
@@ -75,14 +76,34 @@ def build_query_profile(premises: dict[str, Optional[str]], score_map: dict[str,
             role = "ignore"
         elif attr in MANDATORY_QUERY_ATTRS:
             role = "hard"
-        elif score >= 2 and attr in {"compensatoriedade", "tipo_variavel", "estrutura_decisoria", "ambiente_decisao"}:
-            role = "hard"
         elif score >= 1:
             role = "soft"
         else:
             role = "ignore"
         query[attr] = {"value": value, "score": score, "role": role}
     return query
+
+
+def calculate_nlp_metrics(
+    premises: dict[str, Optional[str]],
+    evidence: dict[str, list[str]],
+) -> dict[str, float | int]:
+    total_premises = len(PREMISE_ATTRS)
+    inferred_count = sum(1 for attr in PREMISE_ATTRS if premises.get(attr) is not None)
+    not_inferred_count = total_premises - inferred_count
+    evidence_count = sum(1 for attr in PREMISE_ATTRS if premises.get(attr) is not None and evidence.get(attr))
+    semantic_coverage = 0.0 if total_premises == 0 else 100.0 * inferred_count / total_premises
+    not_inferred_rate = 0.0 if total_premises == 0 else 100.0 * not_inferred_count / total_premises
+    textual_evidence = 0.0 if inferred_count == 0 else 100.0 * evidence_count / inferred_count
+    return {
+        "total_premises": total_premises,
+        "inferred_premises": inferred_count,
+        "not_inferred_premises": not_inferred_count,
+        "premises_with_evidence": evidence_count,
+        "ics_pln": round(semantic_coverage, 2),
+        "tni_pln": round(not_inferred_rate, 2),
+        "iet_pln": round(textual_evidence, 2),
+    }
 
 
 def consult_ontology(
@@ -158,9 +179,18 @@ def consult_ontology(
 def recommend_methods(text: str, profiles: dict[str, dict[str, Optional[str]]], top_k: int = 15) -> RecommendationResult:
     premises, evidence, score_map = infer_premises(text)
     query_profile = build_query_profile(premises, score_map)
+    nlp_metrics = calculate_nlp_metrics(premises, evidence)
     missing = [attr for attr in MANDATORY_QUERY_ATTRS if premises.get(attr) is None]
     if missing:
-        return RecommendationResult(premises, evidence, query_profile, pd.DataFrame(), pd.DataFrame(), missing)
+        return RecommendationResult(
+            premises,
+            evidence,
+            query_profile,
+            nlp_metrics,
+            pd.DataFrame(),
+            pd.DataFrame(),
+            missing,
+        )
 
     accepted, rejected = consult_ontology(query_profile, profiles, top_k=top_k)
-    return RecommendationResult(premises, evidence, query_profile, accepted, rejected, missing)
+    return RecommendationResult(premises, evidence, query_profile, nlp_metrics, accepted, rejected, missing)
