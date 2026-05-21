@@ -1,6 +1,7 @@
 """Constants used by the OntoMCDA recommendation engine."""
 
-APP_NAME = "OntoMCDA: Modelo Semântico para Recomendação de Métodos Multicritério"
+APP_NAME = "OntoMCDA"
+APP_SUBTITLE = "Modelo Semantico para Recomendacao de Metodos Multicriterio"
 APP_OWNER = "David de Oliveira Costa"
 APP_OWNER_LABEL = f"Desenvolvido por {APP_OWNER}, Doutorando em Engenharia de Computacao, 2026."
 OWL_PATH = "data/OntoMCDA_v2.owl"
