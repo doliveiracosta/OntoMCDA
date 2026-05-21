@@ -21,6 +21,10 @@ Desenvolvido por David de Oliveira Costa, Doutorando em Engenharia de Computacao
 - `IET-PLN`: indice de evidencias textuais rastreaveis.
 - `ICL-PLN`: confianca lexical media normalizada das premissas inferidas.
 
+## Benchmark de vocabulario
+
+O lexico operacional foi reforcado a partir do notebook `OntoMCDA_final.ipynb`, usado como benchmark de vocabulario da tese. Veja `VOCABULARY_BENCHMARK_ONTOMCDA.md`.
+
 ## Arquivo principal
 
 ```text
