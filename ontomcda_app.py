@@ -9,7 +9,8 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from ontomcda.constants import APP_NAME, APP_OWNER_LABEL, ATTR_LABELS, OWL_PATH, PREMISE_ATTRS
+from ontomcda.constants import APP_NAME, APP_OWNER_LABEL, APP_SUBTITLE, ATTR_LABELS, OWL_PATH, PREMISE_ATTRS
+from ontomcda.metrics import calculate_operational_nlp_metrics
 from ontomcda.ontology import load_profiles
 from ontomcda.recommender import recommend_methods
 from ontomcda.report import pdf_bytes
@@ -37,22 +38,9 @@ def asset_data_uri(path: Path) -> str:
 def fallback_nlp_metrics(result: object) -> dict[str, float | int]:
     premises = getattr(result, "premises", {}) or {}
     evidence = getattr(result, "evidence", {}) or {}
-    total_premises = len(PREMISE_ATTRS)
-    inferred_count = sum(1 for attr in PREMISE_ATTRS if premises.get(attr) is not None)
-    not_inferred_count = total_premises - inferred_count
-    evidence_count = sum(1 for attr in PREMISE_ATTRS if premises.get(attr) is not None and evidence.get(attr))
-    ics_pln = 0.0 if total_premises == 0 else 100.0 * inferred_count / total_premises
-    tni_pln = 0.0 if total_premises == 0 else 100.0 * not_inferred_count / total_premises
-    iet_pln = 0.0 if inferred_count == 0 else 100.0 * evidence_count / inferred_count
-    return {
-        "total_premises": total_premises,
-        "inferred_premises": inferred_count,
-        "not_inferred_premises": not_inferred_count,
-        "premises_with_evidence": evidence_count,
-        "ics_pln": round(ics_pln, 2),
-        "tni_pln": round(tni_pln, 2),
-        "iet_pln": round(iet_pln, 2),
-    }
+    query_profile = getattr(result, "query_profile", {}) or {}
+    score_map = {attr: int(query_profile.get(attr, {}).get("score", 0) or 0) for attr in PREMISE_ATTRS}
+    return calculate_operational_nlp_metrics(premises, evidence, score_map)
 
 
 def render_opening_cover() -> None:
@@ -99,6 +87,7 @@ def render_opening_cover() -> None:
         )
 
     st.title(APP_NAME)
+    st.markdown(f"### {APP_SUBTITLE}")
     st.caption(
         "Recomendacao explicavel de metodos multicriterio a partir de descricao textual, "
         "fundamentada por PLN e ontologia."
@@ -184,7 +173,7 @@ def main() -> None:
     st.divider()
     st.subheader("Metricas quantitativas do PLN")
     metrics = getattr(result, "nlp_metrics", fallback_nlp_metrics(result))
-    metric_cols = st.columns(4)
+    metric_cols = st.columns(5)
     metric_cols[0].metric("ICS-PLN", f"{float(metrics['ics_pln']):.1f}%")
     metric_cols[1].metric(
         "Premissas inferidas",
@@ -192,10 +181,12 @@ def main() -> None:
     )
     metric_cols[2].metric("TNI-PLN", f"{float(metrics['tni_pln']):.1f}%")
     metric_cols[3].metric("IET-PLN", f"{float(metrics['iet_pln']):.1f}%")
+    metric_cols[4].metric("ICL-PLN", f"{float(metrics.get('icl_pln', 0.0)):.1f}%")
     st.caption(
         "ICS-PLN = indice de cobertura semantica das premissas inferidas. "
         "TNI-PLN = taxa de premissas nao inferidas. "
-        "IET-PLN = indice de evidencias textuais rastreaveis."
+        "IET-PLN = indice de evidencias textuais rastreaveis. "
+        "ICL-PLN = confianca lexical media normalizada das premissas inferidas."
     )
 
     st.divider()

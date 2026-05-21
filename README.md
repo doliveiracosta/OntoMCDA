@@ -11,7 +11,15 @@ Desenvolvido por David de Oliveira Costa, Doutorando em Engenharia de Computacao
 - Consulta a ontologia OWL como base de conhecimento.
 - Ranqueia metodos MCDA por aderencia.
 - Explica criterios atendidos e restricoes fortes violadas.
+- Calcula metricas quantitativas de PLN: ICS-PLN, TNI-PLN, IET-PLN e ICL-PLN.
 - Gera relatorio PDF para compartilhamento academico.
+
+## Metricas quantitativas de PLN
+
+- `ICS-PLN`: indice de cobertura semantica das premissas inferidas.
+- `TNI-PLN`: taxa de premissas nao inferidas.
+- `IET-PLN`: indice de evidencias textuais rastreaveis.
+- `ICL-PLN`: confianca lexical media normalizada das premissas inferidas.
 
 ## Arquivo principal
 

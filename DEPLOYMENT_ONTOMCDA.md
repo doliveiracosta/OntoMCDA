@@ -26,6 +26,7 @@ No Streamlit Cloud, se o app usar `requirements.txt` por padrao, copie o conteud
 - Consulta perfis de metodos MCDA na ontologia OWL.
 - Ranqueia metodos por aderencia.
 - Explica criterios atendidos e restricoes fortes.
+- Calcula metricas quantitativas operacionais de PLN.
 - Gera relatorio PDF.
 
 ## Arquivos para upload publico
