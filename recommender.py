@@ -8,6 +8,7 @@ from typing import Optional
 import pandas as pd
 
 from .constants import ATTRS, ATTR_LABELS, ATTR_WEIGHTS, MANDATORY_QUERY_ATTRS, PREMISE_ATTRS
+from .metrics import calculate_operational_nlp_metrics
 from .text_inference import canon_value, infer_premises
 
 
@@ -84,28 +85,6 @@ def build_query_profile(premises: dict[str, Optional[str]], score_map: dict[str,
     return query
 
 
-def calculate_nlp_metrics(
-    premises: dict[str, Optional[str]],
-    evidence: dict[str, list[str]],
-) -> dict[str, float | int]:
-    total_premises = len(PREMISE_ATTRS)
-    inferred_count = sum(1 for attr in PREMISE_ATTRS if premises.get(attr) is not None)
-    not_inferred_count = total_premises - inferred_count
-    evidence_count = sum(1 for attr in PREMISE_ATTRS if premises.get(attr) is not None and evidence.get(attr))
-    semantic_coverage = 0.0 if total_premises == 0 else 100.0 * inferred_count / total_premises
-    not_inferred_rate = 0.0 if total_premises == 0 else 100.0 * not_inferred_count / total_premises
-    textual_evidence = 0.0 if inferred_count == 0 else 100.0 * evidence_count / inferred_count
-    return {
-        "total_premises": total_premises,
-        "inferred_premises": inferred_count,
-        "not_inferred_premises": not_inferred_count,
-        "premises_with_evidence": evidence_count,
-        "ics_pln": round(semantic_coverage, 2),
-        "tni_pln": round(not_inferred_rate, 2),
-        "iet_pln": round(textual_evidence, 2),
-    }
-
-
 def consult_ontology(
     query_profile: dict[str, dict[str, object]],
     profiles: dict[str, dict[str, Optional[str]]],
@@ -179,7 +158,7 @@ def consult_ontology(
 def recommend_methods(text: str, profiles: dict[str, dict[str, Optional[str]]], top_k: int = 15) -> RecommendationResult:
     premises, evidence, score_map = infer_premises(text)
     query_profile = build_query_profile(premises, score_map)
-    nlp_metrics = calculate_nlp_metrics(premises, evidence)
+    nlp_metrics = calculate_operational_nlp_metrics(premises, evidence, score_map)
     missing = [attr for attr in MANDATORY_QUERY_ATTRS if premises.get(attr) is None]
     if missing:
         return RecommendationResult(

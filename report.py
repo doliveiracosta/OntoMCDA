@@ -91,6 +91,11 @@ def write_pdf_report(
             f"{float(metrics.get('iet_pln', 0.0)):.1f}%",
             "Indice de evidencias textuais rastreaveis.",
         ],
+        [
+            "ICL-PLN",
+            f"{float(metrics.get('icl_pln', 0.0)):.1f}%",
+            "Confianca lexical media normalizada das premissas inferidas.",
+        ],
     ]
     story.append(table(metric_rows, [3.5 * cm, 3.0 * cm, 9.2 * cm]))
     story.append(Spacer(1, 10))
