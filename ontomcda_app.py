@@ -216,7 +216,6 @@ def main() -> None:
             {
                 "Premissa": ATTR_LABELS.get(attr, attr),
                 "Valor inferido": value or "Nao inferido",
-                "Papel na consulta": result.query_profile[attr]["role"],
                 "Evidencias": evidence,
             }
         )
