@@ -459,6 +459,42 @@ def infer_attribute(text_norm: str, attr: str) -> tuple[Optional[str], list[str]
     return canon_value(attr, best), evidence[best], best_score
 
 
+def infer_compensatoriedade_by_rules(text_norm: str) -> tuple[Optional[str], list[str], int]:
+    """Infer compensatoriedade with robust semantic patterns.
+
+    This complements the lexicon because users often write variations such as
+    "compensacao", "compensacao parcial", "nao compensatorio" or even minor
+    spelling mistakes around the compensatory root.
+    """
+    root = r"(compens\w*|compesn\w*|trade\s*-?\s*off)"
+    negative_before = rf"\b(nao|sem|nunca|jamais)\b[\w\s,.;:-]{{0,45}}\b{root}\b"
+    negative_after = rf"\b{root}\b[\w\s,.;:-]{{0,45}}\b(nao|nunca|jamais)\b"
+    partial_near = rf"\b{root}\b[\w\s,.;:-]{{0,45}}\b(parcial\w*|limitad\w*)\b"
+    partial_before = rf"\b(parcial\w*|limitad\w*)\b[\w\s,.;:-]{{0,45}}\b{root}\b"
+    compensatory = rf"\b{root}\b"
+
+    if re.search(negative_before, text_norm) or re.search(negative_after, text_norm):
+        return "NaoCompensatorio", ["regra_regex_nao_compensatorio"], 3
+    if re.search(partial_near, text_norm) or re.search(partial_before, text_norm):
+        return "ParcialmenteCompensatorio", ["regra_regex_compensacao_parcial"], 3
+    if re.search(compensatory, text_norm):
+        return "Compensatorio", ["regra_regex_compensatorio"], 2
+    if any(
+        phrase in text_norm
+        for phrase in [
+            "ganho em um criterio",
+            "perda em outro criterio",
+            "maior custo pode ser aceito",
+            "desempenho superior em um criterio",
+            "desempenho inferior em outro criterio",
+            "equilibrio entre criterios",
+            "substituicao entre criterios",
+        ]
+    ):
+        return "Compensatorio", ["regra_semantica_tradeoff_implicito"], 2
+    return None, [], 0
+
+
 def infer_premises(text: str) -> tuple[dict[str, Optional[str]], dict[str, list[str]], dict[str, int]]:
     text_norm = normalize_text(text)
     premises: dict[str, Optional[str]] = {}
@@ -512,53 +548,10 @@ def infer_premises(text: str) -> tuple[dict[str, Optional[str]], dict[str, list[
         evidence_map["monotonicidade"] = evidence_map["monotonicidade"] + ["regra_precedencia_monotonico"]
         score_map["monotonicidade"] = max(score_map["monotonicidade"], 2)
 
-    nao_comp_patterns = [
-        "nao compensa",
-        "nao compens",
-        "nao admite compens",
-        "nao permite compens",
-        "sem compens",
-        "veto",
-        "limiar de veto",
-        "discordancia",
-        "nao admite trade off",
-        "nao admite trade-off",
-    ]
-    parcial_comp_patterns = [
-        "parcialmente compens",
-        "compensacao parcial",
-        "compensacao e parcial",
-        "compensacao parcialmente",
-        "compensado parcialmente",
-        "compensacao limitada",
-        "parcial compens",
-    ]
-    comp_patterns = [
-        "compensa",
-        "compensacao",
-        "compensatorio",
-        "trade off",
-        "trade-off",
-        "substituicao entre criterios",
-        "ganho em um criterio",
-        "perda em outro criterio",
-        "desempenho superior em um criterio",
-        "desempenho inferior em outro criterio",
-        "um criterio pode compensar outro",
-        "maior custo pode ser aceito",
-        "equilibrio entre criterios",
-    ]
-    if any(pattern in text_norm for pattern in nao_comp_patterns):
-        premises["compensatoriedade"] = "NaoCompensatorio"
-        evidence_map["compensatoriedade"] = evidence_map["compensatoriedade"] + ["regra_semantica_nao_compensatorio"]
-        score_map["compensatoriedade"] = max(score_map["compensatoriedade"], 2)
-    elif any(pattern in text_norm for pattern in parcial_comp_patterns):
-        premises["compensatoriedade"] = "ParcialmenteCompensatorio"
-        evidence_map["compensatoriedade"] = evidence_map["compensatoriedade"] + ["regra_semantica_parcialmente_compensatorio"]
-        score_map["compensatoriedade"] = max(score_map["compensatoriedade"], 2)
-    elif any(pattern in text_norm for pattern in comp_patterns):
-        premises["compensatoriedade"] = "Compensatorio"
-        evidence_map["compensatoriedade"] = evidence_map["compensatoriedade"] + ["regra_semantica_compensatorio"]
-        score_map["compensatoriedade"] = max(score_map["compensatoriedade"], 2)
+    comp_value, comp_evidence, comp_score = infer_compensatoriedade_by_rules(text_norm)
+    if comp_value is not None:
+        premises["compensatoriedade"] = comp_value
+        evidence_map["compensatoriedade"] = evidence_map["compensatoriedade"] + comp_evidence
+        score_map["compensatoriedade"] = max(score_map["compensatoriedade"], comp_score)
 
     return premises, evidence_map, score_map
