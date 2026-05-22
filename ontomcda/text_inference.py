@@ -495,6 +495,128 @@ def infer_compensatoriedade_by_rules(text_norm: str) -> tuple[Optional[str], lis
     return None, [], 0
 
 
+def infer_monotonicidade_by_rules(text_norm: str) -> tuple[Optional[str], list[str], int]:
+    """Infer monotonicity from common MCDA wording."""
+    non_monotonic_patterns = [
+        r"\bnao\b[\w\s,.;:-]{0,35}\bmonotonic\w*",
+        r"\bnao\b[\w\s,.;:-]{0,45}\bimplica\b[\w\s,.;:-]{0,25}\bmelhora\w*",
+        r"\baumento\b[\w\s,.;:-]{0,45}\bnao\b[\w\s,.;:-]{0,35}\bmelhora\w*",
+        r"\breducao\b[\w\s,.;:-]{0,45}\bnao\b[\w\s,.;:-]{0,35}\bmelhora\w*",
+    ]
+    if any(re.search(pattern, text_norm) for pattern in non_monotonic_patterns) or any(
+        phrase in text_norm
+        for phrase in [
+            "relacao nao linear",
+            "preferencia nao linear",
+            "efeito limiar",
+            "ponto de saturacao",
+            "limiar de veto",
+        ]
+    ):
+        return "NaoMonotonico", ["regra_semantica_nao_monotonico"], 3
+
+    monotonic_phrases = [
+        "quanto maior melhor",
+        "quanto maior, melhor",
+        "quanto menor melhor",
+        "quanto menor, melhor",
+        "mais e melhor",
+        "menos e melhor",
+        "criterio beneficio",
+        "criterio de beneficio",
+        "criterio custo",
+        "criterio de custo",
+        "aumento melhora",
+        "reducao melhora",
+        "dominancia",
+    ]
+    if any(phrase in text_norm for phrase in monotonic_phrases) or re.search(r"\bmonotonic\w*", text_norm):
+        return "Monotonico", ["regra_semantica_monotonico"], 3
+
+    return None, [], 0
+
+
+def infer_ponderabilidade_by_rules(text_norm: str) -> tuple[Optional[str], list[str], int]:
+    """Infer whether criteria can be weighted."""
+    non_weighted_patterns = [
+        r"\bsem\b[\w\s,.;:-]{0,25}\bpesos?\b",
+        r"\bnao\b[\w\s,.;:-]{0,25}\busa\b[\w\s,.;:-]{0,15}\bpesos?\b",
+        r"\bdispensa\b[\w\s,.;:-]{0,25}\bpesos?\b",
+        r"\bnao\b[\w\s,.;:-]{0,25}\bponder\w*",
+    ]
+    if any(re.search(pattern, text_norm) for pattern in non_weighted_patterns):
+        return "NaoPonderavel", ["regra_semantica_sem_pesos"], 3
+
+    partial_phrases = [
+        "pesos parciais",
+        "ponderacao parcial",
+        "importancia aproximada",
+        "pesos qualitativos",
+        "preferencia aproximada",
+    ]
+    if any(phrase in text_norm for phrase in partial_phrases):
+        return "SemiPonderavel", ["regra_semantica_ponderacao_parcial"], 3
+
+    weighted_phrases = [
+        "pesos definidos",
+        "pesos dos criterios",
+        "peso dos criterios",
+        "criterios ponderados",
+        "importancia relativa",
+        "atribuicao direta de pesos",
+        "comparacao par a par",
+        "comparacao par-a-par",
+        "comparacoes par a par",
+        "comparacoes par-a-par",
+        "swing weighting",
+        "best worst method",
+        "bwm",
+        "ahp",
+        "entropia",
+        "critic",
+    ]
+    if any(phrase in text_norm for phrase in weighted_phrases) or re.search(r"\bpesos?\b", text_norm):
+        return "Ponderavel", ["regra_semantica_ponderavel"], 2
+
+    return None, [], 0
+
+
+def infer_completude_by_rules(text_norm: str) -> tuple[Optional[str], list[str], int]:
+    """Infer preference completeness from textual evidence."""
+    incomplete_phrases = [
+        "preferencias incompletas",
+        "informacao incompleta",
+        "informacoes incompletas",
+        "comparacao parcial",
+        "comparacoes parciais",
+        "dados ausentes",
+        "lacunas",
+        "incomparabilidade",
+        "sem todas as comparacoes",
+        "nem todas as alternativas",
+        "nem todos os pares",
+    ]
+    if any(phrase in text_norm for phrase in incomplete_phrases) or "incomplet" in text_norm:
+        return "Incompleto", ["regra_semantica_incompleto"], 3
+
+    complete_phrases = [
+        "preferencias completas",
+        "informacao completa",
+        "informacoes completas",
+        "comparacao completa",
+        "comparacoes completas",
+        "todas as alternativas",
+        "todas as comparacoes",
+        "todos os pares",
+        "comparabilidade total",
+        "matriz completa",
+    ]
+    if any(phrase in text_norm for phrase in complete_phrases):
+        return "Completo", ["regra_semantica_completo"], 3
+
+    return None, [], 0
+
+
 def infer_premises(text: str) -> tuple[dict[str, Optional[str]], dict[str, list[str]], dict[str, int]]:
     text_norm = normalize_text(text)
     premises: dict[str, Optional[str]] = {}
@@ -534,19 +656,37 @@ def infer_premises(text: str) -> tuple[dict[str, Optional[str]], dict[str, list[
         evidence_map["ambiente_decisao"] = evidence_map["ambiente_decisao"] + ["regra_precedencia_incerteza"]
         score_map["ambiente_decisao"] = max(score_map["ambiente_decisao"], 2)
 
-    if any(term in text_norm for term in ["incomplet", "comparacao parcial", "comparacoes parciais"]):
-        premises["completude_pref"] = "Incompleto"
-        evidence_map["completude_pref"] = evidence_map["completude_pref"] + ["regra_precedencia_incompleto"]
-        score_map["completude_pref"] = max(score_map["completude_pref"], 2)
-    elif any(term in text_norm for term in ["preferencias completas", "comparacao completa", "comparacoes completas"]):
-        premises["completude_pref"] = "Completo"
-        evidence_map["completude_pref"] = evidence_map["completude_pref"] + ["regra_precedencia_completo"]
-        score_map["completude_pref"] = max(score_map["completude_pref"], 2)
+    complete_value, complete_evidence, complete_score = infer_completude_by_rules(text_norm)
+    if complete_value is not None:
+        premises["completude_pref"] = complete_value
+        evidence_map["completude_pref"] = evidence_map["completude_pref"] + complete_evidence
+        score_map["completude_pref"] = max(score_map["completude_pref"], complete_score)
 
-    if any(term in text_norm for term in ["mais e melhor", "menos e melhor", "monotonic", "dominancia"]):
-        premises["monotonicidade"] = "Monotonico"
-        evidence_map["monotonicidade"] = evidence_map["monotonicidade"] + ["regra_precedencia_monotonico"]
-        score_map["monotonicidade"] = max(score_map["monotonicidade"], 2)
+    monotonic_value, monotonic_evidence, monotonic_score = infer_monotonicidade_by_rules(text_norm)
+    if monotonic_value is not None:
+        premises["monotonicidade"] = monotonic_value
+        evidence_map["monotonicidade"] = evidence_map["monotonicidade"] + monotonic_evidence
+        score_map["monotonicidade"] = max(score_map["monotonicidade"], monotonic_score)
+
+    ponder_value, ponder_evidence, ponder_score = infer_ponderabilidade_by_rules(text_norm)
+    if ponder_value is not None:
+        premises["ponderabilidade"] = ponder_value
+        evidence_map["ponderabilidade"] = evidence_map["ponderabilidade"] + ponder_evidence
+        score_map["ponderabilidade"] = max(score_map["ponderabilidade"], ponder_score)
+        if ponder_value != "NaoPonderavel":
+            premises["usa_pesos"] = premises.get("usa_pesos") or "Sim"
+            premises["requer_pesos"] = premises.get("requer_pesos") or "Sim"
+            score_map["usa_pesos"] = max(score_map["usa_pesos"], 2)
+            score_map["requer_pesos"] = max(score_map["requer_pesos"], 2)
+            evidence_map["usa_pesos"] = evidence_map["usa_pesos"] + ["regra_semantica_pesos"]
+            evidence_map["requer_pesos"] = evidence_map["requer_pesos"] + ["regra_semantica_pesos"]
+        else:
+            premises["usa_pesos"] = "Nao"
+            premises["requer_pesos"] = "Nao"
+            score_map["usa_pesos"] = max(score_map["usa_pesos"], 2)
+            score_map["requer_pesos"] = max(score_map["requer_pesos"], 2)
+            evidence_map["usa_pesos"] = evidence_map["usa_pesos"] + ["regra_semantica_sem_pesos"]
+            evidence_map["requer_pesos"] = evidence_map["requer_pesos"] + ["regra_semantica_sem_pesos"]
 
     comp_value, comp_evidence, comp_score = infer_compensatoriedade_by_rules(text_norm)
     if comp_value is not None:

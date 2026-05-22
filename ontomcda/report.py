@@ -17,6 +17,8 @@ def write_pdf_report(
     *,
     problem_text: str,
     premises: dict,
+    nlp_metrics: dict | None = None,
+    premise_diagnostics: list[dict] | None = None,
     recommendations: pd.DataFrame,
 ) -> None:
     from reportlab.lib import colors
@@ -66,7 +68,57 @@ def write_pdf_report(
     story.append(table(premise_rows, [6.5 * cm, 9.2 * cm]))
     story.append(Spacer(1, 10))
 
-    story.append(paragraph("3. Metodos recomendados", "Heading1"))
+    story.append(paragraph("3. Metricas quantitativas do PLN", "Heading1"))
+    metrics = nlp_metrics or {}
+    metric_rows = [
+        ["Metrica", "Valor", "Interpretacao"],
+        [
+            "ICS-PLN",
+            f"{float(metrics.get('ics_pln', 0.0)):.1f}%",
+            "Indice de cobertura semantica das premissas inferidas.",
+        ],
+        [
+            "Premissas inferidas",
+            f"{int(metrics.get('inferred_premises', 0))}/{int(metrics.get('total_premises', len(PREMISE_ATTRS)))}",
+            "Quantidade de premissas identificadas pelo PLN.",
+        ],
+        [
+            "TNI-PLN",
+            f"{float(metrics.get('tni_pln', 0.0)):.1f}%",
+            "Taxa de premissas nao inferidas pelo PLN.",
+        ],
+        [
+            "IET-PLN",
+            f"{float(metrics.get('iet_pln', 0.0)):.1f}%",
+            "Indice de evidencias textuais rastreaveis.",
+        ],
+        [
+            "ICL-PLN",
+            f"{float(metrics.get('icl_pln', 0.0)):.1f}%",
+            "Confianca lexical media normalizada das premissas inferidas.",
+        ],
+    ]
+    story.append(table(metric_rows, [3.5 * cm, 3.0 * cm, 9.2 * cm]))
+    story.append(Spacer(1, 10))
+
+    diagnostics = premise_diagnostics or []
+    if diagnostics:
+        story.append(paragraph("4. Diagnostico das premissas PLN", "Heading1"))
+        diagnostic_rows = [["Premissa", "Valor", "Diagnostico", "Problema", "Sugestao"]]
+        for row in diagnostics:
+            diagnostic_rows.append(
+                [
+                    row.get("Premissa", ""),
+                    row.get("Valor inferido", ""),
+                    row.get("Diagnostico", ""),
+                    row.get("Problema predominante", ""),
+                    row.get("Sugestao", ""),
+                ]
+            )
+        story.append(table(diagnostic_rows, [2.7 * cm, 2.6 * cm, 3.2 * cm, 2.7 * cm, 4.5 * cm]))
+        story.append(Spacer(1, 10))
+
+    story.append(paragraph("5. Metodos recomendados", "Heading1"))
     if recommendations.empty:
         story.append(paragraph("Nenhum metodo recomendado. Revise a descricao do problema."))
     else:

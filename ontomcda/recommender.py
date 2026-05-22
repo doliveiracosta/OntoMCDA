@@ -8,6 +8,7 @@ from typing import Optional
 import pandas as pd
 
 from .constants import ATTRS, ATTR_LABELS, ATTR_WEIGHTS, MANDATORY_QUERY_ATTRS, PREMISE_ATTRS
+from .metrics import build_premise_diagnostics, calculate_operational_nlp_metrics
 from .text_inference import canon_value, infer_premises
 
 
@@ -16,6 +17,8 @@ class RecommendationResult:
     premises: dict[str, Optional[str]]
     evidence: dict[str, list[str]]
     query_profile: dict[str, dict[str, object]]
+    nlp_metrics: dict[str, float | int]
+    premise_diagnostics: list[dict[str, object]]
     accepted: pd.DataFrame
     rejected: pd.DataFrame
     missing_mandatory: list[str]
@@ -74,8 +77,6 @@ def build_query_profile(premises: dict[str, Optional[str]], score_map: dict[str,
         if value is None:
             role = "ignore"
         elif attr in MANDATORY_QUERY_ATTRS:
-            role = "hard"
-        elif score >= 2 and attr in {"compensatoriedade", "tipo_variavel", "estrutura_decisoria", "ambiente_decisao"}:
             role = "hard"
         elif score >= 1:
             role = "soft"
@@ -158,9 +159,20 @@ def consult_ontology(
 def recommend_methods(text: str, profiles: dict[str, dict[str, Optional[str]]], top_k: int = 15) -> RecommendationResult:
     premises, evidence, score_map = infer_premises(text)
     query_profile = build_query_profile(premises, score_map)
+    nlp_metrics = calculate_operational_nlp_metrics(premises, evidence, score_map)
+    premise_diagnostics = build_premise_diagnostics(premises, evidence, score_map)
     missing = [attr for attr in MANDATORY_QUERY_ATTRS if premises.get(attr) is None]
     if missing:
-        return RecommendationResult(premises, evidence, query_profile, pd.DataFrame(), pd.DataFrame(), missing)
+        return RecommendationResult(
+            premises,
+            evidence,
+            query_profile,
+            nlp_metrics,
+            premise_diagnostics,
+            pd.DataFrame(),
+            pd.DataFrame(),
+            missing,
+        )
 
     accepted, rejected = consult_ontology(query_profile, profiles, top_k=top_k)
-    return RecommendationResult(premises, evidence, query_profile, accepted, rejected, missing)
+    return RecommendationResult(premises, evidence, query_profile, nlp_metrics, premise_diagnostics, accepted, rejected, missing)
