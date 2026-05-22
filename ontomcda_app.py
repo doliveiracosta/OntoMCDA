@@ -75,6 +75,32 @@ def render_opening_cover() -> None:
         .institutional-logos .logo-ppgec {
             height: 48px;
         }
+        .usage-guide {
+            margin: 0.2rem 0 1.1rem;
+            color: #4b5563;
+            font-size: 0.94rem;
+        }
+        .usage-guide summary {
+            cursor: pointer;
+            color: #6b7280;
+            text-decoration: none;
+            width: fit-content;
+            list-style: none;
+        }
+        .usage-guide summary:hover {
+            color: #374151;
+        }
+        .usage-guide summary::-webkit-details-marker {
+            display: none;
+        }
+        .usage-guide ol {
+            margin: 0.75rem 0 0;
+            padding-left: 1.25rem;
+            line-height: 1.45;
+        }
+        .usage-guide li {
+            margin-bottom: 0.42rem;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -93,6 +119,27 @@ def render_opening_cover() -> None:
             """,
             unsafe_allow_html=True,
         )
+
+    st.markdown(
+        """
+        <details class="usage-guide">
+            <summary>Como utilizar a plataforma</summary>
+            <ol>
+                <li><strong>Descreva o problema decisorio:</strong> escreva em linguagem natural o contexto, objetivo e alternativas analisadas.</li>
+                <li><strong>Informe a problematica:</strong> indique se deseja escolher, ordenar, classificar ou descrever alternativas.</li>
+                <li><strong>Explique os criterios:</strong> descreva os criterios relevantes e o tipo de dados disponiveis.</li>
+                <li><strong>Indique a estrutura decisoria:</strong> informe se a decisao e individual, em grupo, por comite ou por multiplos avaliadores.</li>
+                <li><strong>Declare o ambiente de decisao:</strong> mencione se ha certeza, risco, incerteza, ambiguidade ou dados imprecisos.</li>
+                <li><strong>Explique o uso de pesos:</strong> informe se havera pesos, importancia relativa ou comparacao par-a-par.</li>
+                <li><strong>Informe a compensatoriedade:</strong> indique se ha compensacao, compensacao parcial ou nao compensacao entre criterios.</li>
+                <li><strong>Analise a recomendacao:</strong> clique em Analisar e recomendar para visualizar premissas inferidas, metricas de PLN e metodos recomendados.</li>
+                <li><strong>Revise o diagnostico:</strong> use a matriz diagnostica para melhorar a descricao textual quando alguma premissa nao for inferida.</li>
+                <li><strong>Exporte o relatorio:</strong> baixe o PDF para registrar as premissas, metricas e recomendacoes.</li>
+            </ol>
+        </details>
+        """,
+        unsafe_allow_html=True,
+    )
 
     st.title(APP_NAME)
     st.markdown(f"### {APP_SUBTITLE}")
