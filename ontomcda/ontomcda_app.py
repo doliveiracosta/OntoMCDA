@@ -51,41 +51,10 @@ def fallback_premise_diagnostics(result: object) -> list[dict[str, object]]:
     return build_premise_diagnostics(premises, evidence, score_map)
 
 
-def lexical_score_indicator(value: object) -> str:
-    try:
-        score = int(max(0, min(3, round(float(value)))))
-    except (TypeError, ValueError):
-        score = 0
-
-    scale = {
-        0: "0  🟥 ◻ ◻ ◻",
-        1: "1  🟧 🟧 ◻ ◻",
-        2: "2  🟨 🟨 🟨 ◻",
-        3: "3  🟩 🟩 🟩 🟩",
-    }
-    return scale[score]
-
-
 def render_diagnostic_dataframe(diagnostics: list[dict[str, object]]) -> None:
     df = pd.DataFrame(diagnostics)
-    if "Escore lexical" not in df.columns:
-        st.dataframe(df, use_container_width=True, hide_index=True)
-        return
-
-    df["Escore lexical"] = pd.to_numeric(df["Escore lexical"], errors="coerce").fillna(0).astype(int)
-    df["Escore lexical"] = df["Escore lexical"].map(lexical_score_indicator)
-    st.dataframe(
-        df,
-        use_container_width=True,
-        hide_index=True,
-        column_config={
-            "Escore lexical": st.column_config.TextColumn(
-                "Escore lexical",
-                help="Escala visual: 0 vermelho, 1 laranja, 2 amarelo e 3 verde.",
-                width="medium",
-            )
-        },
-    )
+    df = df.drop(columns=["Escore lexical"], errors="ignore")
+    st.dataframe(df, use_container_width=True, hide_index=True)
 
 
 def render_opening_cover() -> None:
