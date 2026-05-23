@@ -9,7 +9,7 @@ import pandas as pd
 
 from .constants import ATTRS, ATTR_LABELS, ATTR_WEIGHTS, MANDATORY_QUERY_ATTRS, PREMISE_ATTRS
 from .metrics import build_premise_diagnostics, calculate_operational_nlp_metrics
-from .text_inference import canon_value, infer_premises
+from .text_inference import canon_value, infer_premises, jaccard_scores_by_premise
 
 
 @dataclass(slots=True)
@@ -158,8 +158,9 @@ def consult_ontology(
 
 def recommend_methods(text: str, profiles: dict[str, dict[str, Optional[str]]], top_k: int = 15) -> RecommendationResult:
     premises, evidence, score_map = infer_premises(text)
+    jaccard_map = jaccard_scores_by_premise(text)
     query_profile = build_query_profile(premises, score_map)
-    nlp_metrics = calculate_operational_nlp_metrics(premises, evidence, score_map)
+    nlp_metrics = calculate_operational_nlp_metrics(premises, evidence, score_map, jaccard_map)
     premise_diagnostics = build_premise_diagnostics(premises, evidence, score_map)
     missing = [attr for attr in MANDATORY_QUERY_ATTRS if premises.get(attr) is None]
     if missing:

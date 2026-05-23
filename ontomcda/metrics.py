@@ -28,14 +28,17 @@ def calculate_operational_nlp_metrics(
     premises: dict[str, Optional[str]],
     evidence: dict[str, list[str]],
     score_map: dict[str, int] | None = None,
+    jaccard_map: dict[str, float] | None = None,
 ) -> dict[str, float | int]:
     """Calculate runtime NLP metrics for a single user text.
 
     ICS-PLN measures semantic coverage, TNI-PLN measures non-inference,
     IET-PLN measures traceable textual evidence, and ICL-PLN measures the
-    average normalized lexical strength of inferred premises.
+    average normalized lexical strength of inferred premises. IJL-PLN measures
+    complementary lexical Jaccard similarity against the controlled vocabulary.
     """
     score_map = score_map or {}
+    jaccard_map = jaccard_map or {}
     total_premises = len(PREMISE_ATTRS)
     inferred_attrs = [attr for attr in PREMISE_ATTRS if premises.get(attr) is not None]
     inferred_count = len(inferred_attrs)
@@ -51,6 +54,8 @@ def calculate_operational_nlp_metrics(
         for attr in inferred_attrs
     ]
     lexical_confidence = 0.0 if not lexical_scores else 100.0 * sum(lexical_scores) / len(lexical_scores)
+    jaccard_values = [float(jaccard_map.get(attr, 0.0)) for attr in PREMISE_ATTRS]
+    jaccard_similarity = 0.0 if not jaccard_values else sum(jaccard_values) / len(jaccard_values)
 
     return {
         "total_premises": total_premises,
@@ -61,6 +66,7 @@ def calculate_operational_nlp_metrics(
         "tni_pln": round(not_inferred_rate, 2),
         "iet_pln": round(textual_evidence, 2),
         "icl_pln": round(lexical_confidence, 2),
+        "ijl_pln": round(jaccard_similarity, 2),
     }
 
 

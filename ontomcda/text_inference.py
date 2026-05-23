@@ -6,7 +6,7 @@ import re
 import unicodedata
 from typing import Optional
 
-from .constants import ATTRS
+from .constants import ATTRS, PREMISE_ATTRS
 
 
 LEXICON: dict[str, dict[str, list[str]]] = {'tipo_problema': {'Escolha': ['escolher',
@@ -632,6 +632,36 @@ def extend_lexicon() -> None:
 
 extend_lexicon()
 
+JACCARD_STOPWORDS = {
+    "a",
+    "ao",
+    "aos",
+    "as",
+    "com",
+    "como",
+    "da",
+    "das",
+    "de",
+    "do",
+    "dos",
+    "e",
+    "em",
+    "entre",
+    "na",
+    "nas",
+    "no",
+    "nos",
+    "o",
+    "os",
+    "ou",
+    "para",
+    "por",
+    "que",
+    "se",
+    "um",
+    "uma",
+}
+
 def normalize_text(value: str) -> str:
     text = str(value).lower().strip()
     text = unicodedata.normalize("NFKD", text)
@@ -644,6 +674,55 @@ def normalize_text(value: str) -> str:
 def contains_term(text_norm: str, term: str) -> int:
     pattern = r"\b" + re.escape(normalize_text(term)) + r"\b"
     return len(re.findall(pattern, text_norm))
+
+
+def tokenize_for_similarity(value: str) -> list[str]:
+    text = normalize_text(value)
+    tokens = re.findall(r"\b[a-z0-9]{3,}\b", text)
+    return [token for token in tokens if token not in JACCARD_STOPWORDS]
+
+
+def jaccard(a: set[str], b: set[str]) -> float:
+    if not a or not b:
+        return 0.0
+    return len(a & b) / len(a | b)
+
+
+def best_window_jaccard(text_tokens: list[str], term_tokens: list[str]) -> float:
+    if not text_tokens or not term_tokens:
+        return 0.0
+
+    term_set = set(term_tokens)
+    window_size = max(1, len(term_tokens))
+    best = 0.0
+    for start in range(0, len(text_tokens)):
+        window = text_tokens[start : start + window_size]
+        if not window:
+            continue
+        best = max(best, jaccard(set(window), term_set))
+
+    return best
+
+
+def jaccard_scores_by_premise(text: str) -> dict[str, float]:
+    """Calculate lexical Jaccard similarity between text and each premise lexicon.
+
+    The score is complementary and diagnostic: it does not replace symbolic rules.
+    It uses the best local overlap between the input text and controlled terms for
+    each premise, preserving explainability without adding external dependencies.
+    """
+    text_tokens = tokenize_for_similarity(text)
+    scores: dict[str, float] = {}
+
+    for attr in PREMISE_ATTRS:
+        best = 0.0
+        for terms in LEXICON.get(attr, {}).values():
+            for term in terms:
+                term_tokens = tokenize_for_similarity(term)
+                best = max(best, best_window_jaccard(text_tokens, term_tokens))
+        scores[attr] = round(100.0 * best, 2)
+
+    return scores
 
 
 def canon_value(attr: str, value: Optional[str]) -> Optional[str]:

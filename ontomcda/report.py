@@ -102,6 +102,11 @@ def write_pdf_report(
             f"{float(metrics.get('icl_pln', 0.0)):.1f}%",
             "Confianca lexical media normalizada das premissas inferidas.",
         ],
+        [
+            "IJL-PLN",
+            f"{float(metrics.get('ijl_pln', 0.0)):.1f}%",
+            "Similaridade Jaccard lexical media entre texto e vocabulario controlado.",
+        ],
     ]
     story.append(table(metric_rows, [3.5 * cm, 3.0 * cm, 9.2 * cm]))
     story.append(Spacer(1, 10))
