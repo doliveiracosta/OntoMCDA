@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import base64
 import mimetypes
-from html import escape as html_escape
 from pathlib import Path
 
 import pandas as pd
@@ -52,26 +51,19 @@ def fallback_premise_diagnostics(result: object) -> list[dict[str, object]]:
     return build_premise_diagnostics(premises, evidence, score_map)
 
 
-def lexical_score_bar(value: object) -> str:
+def lexical_score_indicator(value: object) -> str:
     try:
-        score = max(0.0, min(3.0, float(value)))
+        score = int(max(0, min(3, round(float(value)))))
     except (TypeError, ValueError):
-        score = 0.0
+        score = 0
 
-    ratio = score / 3.0
-    color_scale = ["#dc2626", "#f97316", "#a3e635", "#16a34a"]
-    color = color_scale[int(round(score))]
-    width = max(5, int(ratio * 100))
-    return (
-        '<div style="display:grid; grid-template-columns:minmax(95px, 1fr) 26px; '
-        'align-items:center; gap:8px; min-width:145px;">'
-        '<div style="height:14px; background:linear-gradient(90deg, #fee2e2, #fef3c7, #dcfce7); '
-        'border-radius:999px; overflow:hidden; box-shadow:inset 0 0 0 1px rgba(17, 24, 39, 0.16);">'
-        f'<div style="height:100%; width:{width}%; background:{color}; border-radius:999px;"></div>'
-        "</div>"
-        f'<span style="color:#111827; font-weight:700; text-align:right;">{score:.0f}</span>'
-        "</div>"
-    )
+    scale = {
+        0: "0  🟥 ◻ ◻ ◻",
+        1: "1  🟧 🟧 ◻ ◻",
+        2: "2  🟨 🟨 🟨 ◻",
+        3: "3  🟩 🟩 🟩 🟩",
+    }
+    return scale[score]
 
 
 def render_diagnostic_dataframe(diagnostics: list[dict[str, object]]) -> None:
@@ -81,59 +73,18 @@ def render_diagnostic_dataframe(diagnostics: list[dict[str, object]]) -> None:
         return
 
     df["Escore lexical"] = pd.to_numeric(df["Escore lexical"], errors="coerce").fillna(0).astype(int)
-    header = "".join(f"<th>{html_escape(str(column))}</th>" for column in df.columns)
-    body_rows = []
-    for _, row in df.iterrows():
-        cells = []
-        for column in df.columns:
-            if column == "Escore lexical":
-                cells.append(f'<td class="lex-score-column">{lexical_score_bar(row[column])}</td>')
-            else:
-                cells.append(f"<td>{html_escape(str(row[column]))}</td>")
-        body_rows.append(f"<tr>{''.join(cells)}</tr>")
-
-    st.markdown(
-        f"""
-        <style>
-        .diagnostic-table-wrap {{
-            width: 100%;
-            overflow-x: auto;
-            border: 1px solid #e5e7eb;
-            border-radius: 7px;
-        }}
-        .diagnostic-table {{
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.88rem;
-        }}
-        .diagnostic-table th {{
-            background: #f3f4f6;
-            color: #6b7280;
-            font-weight: 500;
-            text-align: left;
-            padding: 9px 10px;
-            border-bottom: 1px solid #e5e7eb;
-            white-space: nowrap;
-        }}
-        .diagnostic-table td {{
-            color: #111827;
-            padding: 8px 10px;
-            border-bottom: 1px solid #e5e7eb;
-            border-right: 1px solid #e5e7eb;
-            vertical-align: middle;
-        }}
-        .diagnostic-table tr:last-child td {{
-            border-bottom: 0;
-        }}
-        </style>
-        <div class="diagnostic-table-wrap">
-            <table class="diagnostic-table">
-                <thead><tr>{header}</tr></thead>
-                <tbody>{''.join(body_rows)}</tbody>
-            </table>
-        </div>
-        """,
-        unsafe_allow_html=True,
+    df["Escore lexical"] = df["Escore lexical"].map(lexical_score_indicator)
+    st.dataframe(
+        df,
+        use_container_width=True,
+        hide_index=True,
+        column_config={
+            "Escore lexical": st.column_config.TextColumn(
+                "Escore lexical",
+                help="Escala visual: 0 vermelho, 1 laranja, 2 amarelo e 3 verde.",
+                width="medium",
+            )
+        },
     )
 
 
