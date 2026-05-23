@@ -51,6 +51,12 @@ def fallback_premise_diagnostics(result: object) -> list[dict[str, object]]:
     return build_premise_diagnostics(premises, evidence, score_map)
 
 
+def render_diagnostic_dataframe(diagnostics: list[dict[str, object]]) -> None:
+    df = pd.DataFrame(diagnostics)
+    df = df.drop(columns=["Escore lexical"], errors="ignore")
+    st.dataframe(df, use_container_width=True, hide_index=True)
+
+
 def render_opening_cover() -> None:
     st.markdown(
         """
@@ -245,7 +251,7 @@ def main() -> None:
     )
     diagnostics = getattr(result, "premise_diagnostics", fallback_premise_diagnostics(result))
     with st.expander("Diagnostico por premissa para melhoria do PLN", expanded=True):
-        st.dataframe(pd.DataFrame(diagnostics), use_container_width=True, hide_index=True)
+        render_diagnostic_dataframe(diagnostics)
 
     st.divider()
     summary_cols = st.columns(3)
