@@ -52,6 +52,29 @@ def fallback_premise_diagnostics(result: object) -> list[dict[str, object]]:
     return build_premise_diagnostics(premises, evidence, score_map)
 
 
+def refresh_jaccard_metric_if_needed(metrics: dict, text: str, result: object) -> dict:
+    """Backfill IJL-PLN when an older recommender result did not pass Jaccard scores."""
+    if float(metrics.get("ijl_pln", 0.0) or 0.0) > 0:
+        return metrics
+
+    evidence = getattr(result, "evidence", {}) or {}
+    if not any(evidence.get(attr) for attr in PREMISE_ATTRS):
+        return metrics
+
+    try:
+        from ontomcda.text_inference import jaccard_scores_by_premise
+    except (ImportError, AttributeError):
+        return metrics
+
+    jaccard_map = jaccard_scores_by_premise(text)
+    if not jaccard_map:
+        return metrics
+
+    refreshed = dict(metrics)
+    refreshed["ijl_pln"] = round(sum(float(jaccard_map.get(attr, 0.0)) for attr in PREMISE_ATTRS) / len(PREMISE_ATTRS), 2)
+    return refreshed
+
+
 def lexical_score_bar(value: object) -> str:
     try:
         score = max(0.0, min(3.0, float(value)))
@@ -320,6 +343,7 @@ def main() -> None:
     st.divider()
     st.subheader("Metricas quantitativas do PLN")
     metrics = getattr(result, "nlp_metrics", fallback_nlp_metrics(result))
+    metrics = refresh_jaccard_metric_if_needed(metrics, st.session_state.get("ontomcda_text", text), result)
     metric_cols = st.columns(6)
     metric_cols[0].metric("ICS-PLN", f"{float(metrics['ics_pln']):.1f}%")
     metric_cols[1].metric(
