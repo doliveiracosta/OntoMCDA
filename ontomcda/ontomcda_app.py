@@ -63,10 +63,13 @@ def lexical_score_bar(value: object) -> str:
     color = color_scale[int(round(score))]
     width = max(5, int(ratio * 100))
     return (
-        '<div class="lex-score-cell">'
-        f'<div class="lex-score-track"><div class="lex-score-fill" '
-        f'style="width:{width}%; background:{color};"></div></div>'
-        f'<span class="lex-score-value">{score:.0f}</span>'
+        '<div style="display:grid; grid-template-columns:minmax(95px, 1fr) 26px; '
+        'align-items:center; gap:8px; min-width:145px;">'
+        '<div style="height:14px; background:linear-gradient(90deg, #fee2e2, #fef3c7, #dcfce7); '
+        'border-radius:999px; overflow:hidden; box-shadow:inset 0 0 0 1px rgba(17, 24, 39, 0.16);">'
+        f'<div style="height:100%; width:{width}%; background:{color}; border-radius:999px;"></div>'
+        "</div>"
+        f'<span style="color:#111827; font-weight:700; text-align:right;">{score:.0f}</span>'
         "</div>"
     )
 
@@ -121,31 +124,6 @@ def render_diagnostic_dataframe(diagnostics: list[dict[str, object]]) -> None:
         }}
         .diagnostic-table tr:last-child td {{
             border-bottom: 0;
-        }}
-        .lex-score-column {{
-            min-width: 150px;
-        }}
-        .lex-score-cell {{
-            display: grid;
-            grid-template-columns: minmax(92px, 1fr) 24px;
-            align-items: center;
-            gap: 8px;
-        }}
-        .lex-score-track {{
-            height: 13px;
-            background: linear-gradient(90deg, #fee2e2, #fef3c7, #dcfce7);
-            border-radius: 999px;
-            overflow: hidden;
-            box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.12);
-        }}
-        .lex-score-fill {{
-            height: 100%;
-            border-radius: 999px;
-        }}
-        .lex-score-value {{
-            color: #111827;
-            font-weight: 700;
-            text-align: right;
         }}
         </style>
         <div class="diagnostic-table-wrap">
