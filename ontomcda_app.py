@@ -320,7 +320,7 @@ def main() -> None:
     st.divider()
     st.subheader("Metricas quantitativas do PLN")
     metrics = getattr(result, "nlp_metrics", fallback_nlp_metrics(result))
-    metric_cols = st.columns(5)
+    metric_cols = st.columns(6)
     metric_cols[0].metric("ICS-PLN", f"{float(metrics['ics_pln']):.1f}%")
     metric_cols[1].metric(
         "Premissas inferidas",
@@ -329,11 +329,13 @@ def main() -> None:
     metric_cols[2].metric("TNI-PLN", f"{float(metrics['tni_pln']):.1f}%")
     metric_cols[3].metric("IET-PLN", f"{float(metrics['iet_pln']):.1f}%")
     metric_cols[4].metric("ICL-PLN", f"{float(metrics.get('icl_pln', 0.0)):.1f}%")
+    metric_cols[5].metric("IJL-PLN", f"{float(metrics.get('ijl_pln', 0.0)):.1f}%")
     st.caption(
         "ICS-PLN = indice de cobertura semantica das premissas inferidas. "
         "TNI-PLN = taxa de premissas nao inferidas. "
         "IET-PLN = indice de evidencias textuais rastreaveis. "
-        "ICL-PLN = confianca lexical media normalizada das premissas inferidas."
+        "ICL-PLN = confianca lexical media normalizada das premissas inferidas. "
+        "IJL-PLN = similaridade Jaccard lexical media entre texto e vocabulario controlado."
     )
     diagnostics = getattr(result, "premise_diagnostics", fallback_premise_diagnostics(result))
     with st.expander("Diagnostico por premissa para melhoria do PLN", expanded=True):
