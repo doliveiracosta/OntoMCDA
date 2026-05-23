@@ -95,7 +95,6 @@ def build_premise_diagnostics(
             {
                 "Premissa": ATTR_LABELS.get(attr, attr),
                 "Valor inferido": value or "Nao inferido",
-                "Escore lexical": min(max(score, 0), LEXICAL_SCORE_CAP),
                 "Evidencias": "; ".join(attr_evidence),
                 "Diagnostico": status,
                 "Problema predominante": problem,
