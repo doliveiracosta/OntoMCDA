@@ -378,8 +378,259 @@ LEXICON: dict[str, dict[str, list[str]]] = {'tipo_problema': {'Escolha': ['escol
                                  'importancia estabelecida pelos decisores',
                                  'pesos definidos pelos decisores'],
                          'Nao': ['nao auxilia gerar pesos', 'nao ajuda a gerar pesos', 'nao auxilia a gerar pesos']},
- 'sugere_pesos': {'Sim': ['sugere pesos', 'recomenda pesos', 'propoe pesos', 'indica pesos'],
-                  'Nao': ['nao sugere pesos', 'nao recomenda pesos']}}
+  'sugere_pesos': {'Sim': ['sugere pesos', 'recomenda pesos', 'propoe pesos', 'indica pesos'],
+                   'Nao': ['nao sugere pesos', 'nao recomenda pesos']}}
+
+LEXICON_EXTENSIONS: dict[str, dict[str, list[str]]] = {
+    "tipo_problema": {
+        "Escolha": [
+            "selecionar fornecedores",
+            "selecionar projetos",
+            "definir a alternativa vencedora",
+            "tomar uma decisao de selecao",
+            "escolher entre alternativas",
+            "selecionar a opcao mais adequada",
+        ],
+        "Ordenacao": [
+            "priorizacao de alternativas",
+            "priorizacao de projetos",
+            "ordenacao de alternativas",
+            "ranqueamento de fornecedores",
+            "hierarquizacao de alternativas",
+            "estabelecer prioridades",
+            "ordenar por desempenho",
+        ],
+        "Classificacao": [
+            "classificar fornecedores",
+            "classificar alternativas",
+            "enquadrar alternativas",
+            "atribuir categorias",
+            "categorizar por desempenho",
+            "alocar em classes",
+            "separar em grupos de risco",
+        ],
+    },
+    "compensatoriedade": {
+        "Compensatorio": [
+            "trade off entre criterios",
+            "troca entre criterios",
+            "substituicao de desempenho",
+            "bom desempenho compensa",
+            "ganhos compensam perdas",
+            "permite trade off",
+            "admite compensacao plena",
+        ],
+        "ParcialmenteCompensatorio": [
+            "compensacao com veto",
+            "compensacao limitada",
+            "compensacao parcial",
+            "compensa parcialmente",
+            "trade off limitado",
+            "admite compensacao com restricoes",
+            "ha limiar de veto",
+        ],
+        "NaoCompensatorio": [
+            "nao permite compensacao",
+            "nao admite trade off",
+            "sem trade off",
+            "criterio eliminatorio",
+            "requisito minimo obrigatorio",
+            "veto absoluto",
+            "um criterio nao anula o outro",
+        ],
+    },
+    "tipo_variavel": {
+        "Ordinal": [
+            "escala ordinal",
+            "baixo medio alto",
+            "categorias ordenadas",
+            "niveis de preferencia",
+            "dados qualitativos ordenados",
+        ],
+        "Cardinal": [
+            "dados numericos",
+            "valores numericos",
+            "medidas quantitativas",
+            "indicadores mensuraveis",
+            "custos em reais",
+            "prazo em dias",
+        ],
+        "Mista": [
+            "criterios quantitativos e qualitativos",
+            "dados quantitativos e qualitativos",
+            "indicadores objetivos e subjetivos",
+            "variaveis quantitativas e qualitativas",
+            "criterios numericos e julgamentos qualitativos",
+        ],
+        "CardinalFuzzy": [
+            "dados fuzzy",
+            "numero fuzzy",
+            "escala fuzzy",
+            "avaliacao linguistica fuzzy",
+            "incerteza fuzzy",
+        ],
+        "CardinalIntervalar": [
+            "dados intervalares",
+            "valores em intervalo",
+            "intervalos de variacao",
+            "estimativas intervalares",
+        ],
+        "CardinalGrey": [
+            "dados grey",
+            "sistema grey",
+            "informacao cinzenta",
+            "grey numbers",
+        ],
+    },
+    "monotonicidade": {
+        "Monotonico": [
+            "criterio de beneficio",
+            "criterio de custo",
+            "preferencia crescente",
+            "preferencia decrescente",
+            "maior valor e melhor",
+            "menor valor e melhor",
+            "relacao monotonicamente crescente",
+            "relacao monotonicamente decrescente",
+        ],
+        "NaoMonotonico": [
+            "faixa ideal",
+            "zona ideal",
+            "valor otimo intermediario",
+            "ponto otimo",
+            "ponto de saturacao",
+            "preferencia em formato de u",
+            "preferencia nao monotona",
+        ],
+    },
+    "estrutura_decisoria": {
+        "Grupo": [
+            "decisao coletiva",
+            "decisao em grupo",
+            "comite decisor",
+            "painel de especialistas",
+            "multiplos decisores",
+            "varios avaliadores",
+            "equipe multidisciplinar",
+            "decisao participativa",
+            "colegiado",
+        ],
+        "Individual": [
+            "decisor unico",
+            "decisao individual",
+            "um unico decisor",
+            "responsavel unico",
+            "avaliador unico",
+        ],
+    },
+    "completude_pref": {
+        "Completo": [
+            "todas as comparacoes foram realizadas",
+            "todas as preferencias conhecidas",
+            "informacao totalmente disponivel",
+            "avaliacao completa das alternativas",
+            "sem lacunas de informacao",
+        ],
+        "Incompleto": [
+            "comparacoes faltantes",
+            "preferencias parciais",
+            "informacao faltante",
+            "avaliacao incompleta",
+            "dados nao informados",
+            "nem todos os criterios foram avaliados",
+        ],
+    },
+    "ambiente_decisao": {
+        "Certeza": [
+            "dados deterministico",
+            "dados deterministas",
+            "sem incerteza",
+            "informacoes conhecidas",
+            "cenario estavel",
+        ],
+        "Risco": [
+            "probabilidades conhecidas",
+            "probabilidade estimada",
+            "cenarios probabilisticos",
+            "risco mensuravel",
+            "distribuicao de probabilidade",
+        ],
+        "Incerteza": [
+            "probabilidades desconhecidas",
+            "dados imprecisos",
+            "estimativas incertas",
+            "variabilidade desconhecida",
+            "ambiente incerto",
+            "cenarios incertos",
+            "informacao imprecisa",
+        ],
+    },
+    "ponderabilidade": {
+        "Ponderavel": [
+            "criterios com pesos",
+            "atribuicao de importancia",
+            "importancia dos criterios",
+            "preferencias ponderadas",
+            "vetor de pesos",
+            "pesos elicitados",
+        ],
+        "SemiPonderavel": [
+            "pesos aproximados",
+            "pesos qualitativos",
+            "pesos parcialmente definidos",
+            "importancia qualitativa",
+        ],
+        "NaoPonderavel": [
+            "sem ponderacao",
+            "nao requer ponderacao",
+            "criterios com mesma importancia",
+            "todos os criterios equivalentes",
+        ],
+    },
+    "usa_pesos": {
+        "Sim": [
+            "utiliza pesos",
+            "considera pesos",
+            "incorpora pesos",
+            "criterios ponderados",
+            "vetor de pesos",
+        ],
+        "Nao": [
+            "nao utiliza pesos",
+            "nao considera pesos",
+            "sem vetor de pesos",
+            "sem criterios ponderados",
+        ],
+    },
+    "requer_pesos": {
+        "Sim": [
+            "pesos como entrada",
+            "pesos devem ser informados",
+            "necessita pesos",
+            "exige vetor de pesos",
+            "requer definicao de pesos",
+        ],
+        "Nao": [
+            "nao exige pesos",
+            "nao requer definicao de pesos",
+            "pesos nao precisam ser informados",
+        ],
+    },
+}
+
+
+def extend_lexicon() -> None:
+    for attr, values in LEXICON_EXTENSIONS.items():
+        for value, terms in values.items():
+            LEXICON.setdefault(attr, {}).setdefault(value, [])
+            existing = set(LEXICON[attr][value])
+            for term in terms:
+                if term not in existing:
+                    LEXICON[attr][value].append(term)
+                    existing.add(term)
+
+
+extend_lexicon()
 
 def normalize_text(value: str) -> str:
     text = str(value).lower().strip()
@@ -467,14 +718,18 @@ def infer_compensatoriedade_by_rules(text_norm: str) -> tuple[Optional[str], lis
     spelling mistakes around the compensatory root.
     """
     root = r"(compens\w*|compesn\w*|trade\s*-?\s*off)"
+    veto_root = r"(veto|limiar|restricao minima|requisito minimo|criterio eliminatorio)"
     negative_before = rf"\b(nao|sem|nunca|jamais)\b[\w\s,.;:-]{{0,45}}\b{root}\b"
     negative_after = rf"\b{root}\b[\w\s,.;:-]{{0,45}}\b(nao|nunca|jamais)\b"
     partial_near = rf"\b{root}\b[\w\s,.;:-]{{0,45}}\b(parcial\w*|limitad\w*)\b"
     partial_before = rf"\b(parcial\w*|limitad\w*)\b[\w\s,.;:-]{{0,45}}\b{root}\b"
+    comp_with_veto = rf"\b{root}\b[\w\s,.;:-]{{0,80}}\b{veto_root}\b|\b{veto_root}\b[\w\s,.;:-]{{0,80}}\b{root}\b"
     compensatory = rf"\b{root}\b"
 
     if re.search(negative_before, text_norm) or re.search(negative_after, text_norm):
         return "NaoCompensatorio", ["regra_regex_nao_compensatorio"], 3
+    if re.search(comp_with_veto, text_norm):
+        return "ParcialmenteCompensatorio", ["regra_regex_compensacao_com_veto"], 3
     if re.search(partial_near, text_norm) or re.search(partial_before, text_norm):
         return "ParcialmenteCompensatorio", ["regra_regex_compensacao_parcial"], 3
     if re.search(compensatory, text_norm):
@@ -489,9 +744,13 @@ def infer_compensatoriedade_by_rules(text_norm: str) -> tuple[Optional[str], lis
             "desempenho inferior em outro criterio",
             "equilibrio entre criterios",
             "substituicao entre criterios",
+            "troca entre criterios",
+            "ganhos compensam perdas",
         ]
     ):
         return "Compensatorio", ["regra_semantica_tradeoff_implicito"], 2
+    if any(phrase in text_norm for phrase in ["criterio eliminatorio", "requisito minimo obrigatorio", "veto absoluto"]):
+        return "NaoCompensatorio", ["regra_semantica_nao_compensatorio"], 3
     return None, [], 0
 
 
@@ -511,6 +770,11 @@ def infer_monotonicidade_by_rules(text_norm: str) -> tuple[Optional[str], list[s
             "efeito limiar",
             "ponto de saturacao",
             "limiar de veto",
+            "faixa ideal",
+            "zona ideal",
+            "ponto otimo",
+            "valor otimo intermediario",
+            "preferencia em formato de u",
         ]
     ):
         return "NaoMonotonico", ["regra_semantica_nao_monotonico"], 3
@@ -528,6 +792,10 @@ def infer_monotonicidade_by_rules(text_norm: str) -> tuple[Optional[str], list[s
         "criterio de custo",
         "aumento melhora",
         "reducao melhora",
+        "maior valor e melhor",
+        "menor valor e melhor",
+        "preferencia crescente",
+        "preferencia decrescente",
         "dominancia",
     ]
     if any(phrase in text_norm for phrase in monotonic_phrases) or re.search(r"\bmonotonic\w*", text_norm):
@@ -643,17 +911,46 @@ def infer_premises(text: str) -> tuple[dict[str, Optional[str]], dict[str, list[
         ("quantitativ" in text_norm and "qualitativ" in text_norm)
         or contains_term(text_norm, "dados mistos")
         or contains_term(text_norm, "variaveis mistas")
+        or contains_term(text_norm, "criterios numericos e qualitativos")
+        or contains_term(text_norm, "indicadores objetivos e subjetivos")
+        or ("numerico" in text_norm and "qualitativ" in text_norm)
     ):
         premises["tipo_variavel"] = "Mista"
         evidence_map["tipo_variavel"] = evidence_map["tipo_variavel"] + ["regra_precedencia_variavel_mista"]
         score_map["tipo_variavel"] = max(score_map["tipo_variavel"], 2)
+    elif any(term in text_norm for term in ["dados numericos", "valores numericos", "indicadores mensuraveis"]):
+        premises["tipo_variavel"] = "Cardinal"
+        evidence_map["tipo_variavel"] = evidence_map["tipo_variavel"] + ["regra_precedencia_variavel_cardinal"]
+        score_map["tipo_variavel"] = max(score_map["tipo_variavel"], 2)
+    elif any(term in text_norm for term in ["escala ordinal", "categorias ordenadas", "baixo medio alto"]):
+        premises["tipo_variavel"] = "Ordinal"
+        evidence_map["tipo_variavel"] = evidence_map["tipo_variavel"] + ["regra_precedencia_variavel_ordinal"]
+        score_map["tipo_variavel"] = max(score_map["tipo_variavel"], 2)
 
     if any(
         term in text_norm
-        for term in ["incerteza", "incerto", "imprecis", "cenario futuro", "cenarios futuros", "subjetividade"]
+        for term in [
+            "incerteza",
+            "incerto",
+            "imprecis",
+            "cenario futuro",
+            "cenarios futuros",
+            "subjetividade",
+            "probabilidades desconhecidas",
+            "variabilidade desconhecida",
+            "ambiente incerto",
+        ]
     ):
         premises["ambiente_decisao"] = "Incerteza"
         evidence_map["ambiente_decisao"] = evidence_map["ambiente_decisao"] + ["regra_precedencia_incerteza"]
+        score_map["ambiente_decisao"] = max(score_map["ambiente_decisao"], 2)
+    elif any(term in text_norm for term in ["probabilidade conhecida", "probabilidades conhecidas", "cenarios probabilisticos", "risco mensuravel"]):
+        premises["ambiente_decisao"] = "Risco"
+        evidence_map["ambiente_decisao"] = evidence_map["ambiente_decisao"] + ["regra_precedencia_risco"]
+        score_map["ambiente_decisao"] = max(score_map["ambiente_decisao"], 2)
+    elif any(term in text_norm for term in ["sem incerteza", "dados deterministico", "dados deterministas", "cenario estavel"]):
+        premises["ambiente_decisao"] = "Certeza"
+        evidence_map["ambiente_decisao"] = evidence_map["ambiente_decisao"] + ["regra_precedencia_certeza"]
         score_map["ambiente_decisao"] = max(score_map["ambiente_decisao"], 2)
 
     complete_value, complete_evidence, complete_score = infer_completude_by_rules(text_norm)
