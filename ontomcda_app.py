@@ -80,6 +80,7 @@ def lexical_score_bar(value: object) -> str:
 
 def render_diagnostic_dataframe(diagnostics: list[dict[str, object]]) -> None:
     df = pd.DataFrame(diagnostics)
+    df = df.drop(columns=["Diagnostico", "Problema predominante"], errors="ignore")
     if "Escore lexical" not in df.columns:
         st.dataframe(df, use_container_width=True, hide_index=True)
         return
