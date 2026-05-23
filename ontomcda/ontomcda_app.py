@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import base64
 import mimetypes
+from html import escape as html_escape
 from pathlib import Path
 
 import pandas as pd
@@ -51,36 +52,111 @@ def fallback_premise_diagnostics(result: object) -> list[dict[str, object]]:
     return build_premise_diagnostics(premises, evidence, score_map)
 
 
-def lexical_score_cell_style(value: object) -> str:
+def lexical_score_bar(value: object) -> str:
     try:
         score = max(0.0, min(3.0, float(value)))
     except (TypeError, ValueError):
         score = 0.0
 
     ratio = score / 3.0
-    red = int(220 + (22 - 220) * ratio)
-    green = int(38 + (163 - 38) * ratio)
-    blue = int(38 + (74 - 38) * ratio)
-    color = f"rgb({red}, {green}, {blue})"
-    width = max(8, int(ratio * 100))
+    color_scale = ["#dc2626", "#f97316", "#a3e635", "#16a34a"]
+    color = color_scale[int(round(score))]
+    width = max(5, int(ratio * 100))
     return (
-        f"background: linear-gradient(90deg, {color} {width}%, #f3f4f6 {width}%); "
-        "color: #111827; font-weight: 700; text-align: center;"
+        '<div class="lex-score-cell">'
+        f'<div class="lex-score-track"><div class="lex-score-fill" '
+        f'style="width:{width}%; background:{color};"></div></div>'
+        f'<span class="lex-score-value">{score:.0f}</span>'
+        "</div>"
     )
 
 
 def render_diagnostic_dataframe(diagnostics: list[dict[str, object]]) -> None:
     df = pd.DataFrame(diagnostics)
-    if "Escore lexical" in df.columns:
-        df["Escore lexical"] = pd.to_numeric(df["Escore lexical"], errors="coerce").fillna(0).astype(int)
-        styled = (
-            df.style.applymap(lexical_score_cell_style, subset=["Escore lexical"])
-            .format({"Escore lexical": "{:.0f}"})
-            .hide(axis="index")
-        )
-        st.dataframe(styled, use_container_width=True)
-    else:
+    if "Escore lexical" not in df.columns:
         st.dataframe(df, use_container_width=True, hide_index=True)
+        return
+
+    df["Escore lexical"] = pd.to_numeric(df["Escore lexical"], errors="coerce").fillna(0).astype(int)
+    header = "".join(f"<th>{html_escape(str(column))}</th>" for column in df.columns)
+    body_rows = []
+    for _, row in df.iterrows():
+        cells = []
+        for column in df.columns:
+            if column == "Escore lexical":
+                cells.append(f'<td class="lex-score-column">{lexical_score_bar(row[column])}</td>')
+            else:
+                cells.append(f"<td>{html_escape(str(row[column]))}</td>")
+        body_rows.append(f"<tr>{''.join(cells)}</tr>")
+
+    st.markdown(
+        f"""
+        <style>
+        .diagnostic-table-wrap {{
+            width: 100%;
+            overflow-x: auto;
+            border: 1px solid #e5e7eb;
+            border-radius: 7px;
+        }}
+        .diagnostic-table {{
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.88rem;
+        }}
+        .diagnostic-table th {{
+            background: #f3f4f6;
+            color: #6b7280;
+            font-weight: 500;
+            text-align: left;
+            padding: 9px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            white-space: nowrap;
+        }}
+        .diagnostic-table td {{
+            color: #111827;
+            padding: 8px 10px;
+            border-bottom: 1px solid #e5e7eb;
+            border-right: 1px solid #e5e7eb;
+            vertical-align: middle;
+        }}
+        .diagnostic-table tr:last-child td {{
+            border-bottom: 0;
+        }}
+        .lex-score-column {{
+            min-width: 150px;
+        }}
+        .lex-score-cell {{
+            display: grid;
+            grid-template-columns: minmax(92px, 1fr) 24px;
+            align-items: center;
+            gap: 8px;
+        }}
+        .lex-score-track {{
+            height: 13px;
+            background: linear-gradient(90deg, #fee2e2, #fef3c7, #dcfce7);
+            border-radius: 999px;
+            overflow: hidden;
+            box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.12);
+        }}
+        .lex-score-fill {{
+            height: 100%;
+            border-radius: 999px;
+        }}
+        .lex-score-value {{
+            color: #111827;
+            font-weight: 700;
+            text-align: right;
+        }}
+        </style>
+        <div class="diagnostic-table-wrap">
+            <table class="diagnostic-table">
+                <thead><tr>{header}</tr></thead>
+                <tbody>{''.join(body_rows)}</tbody>
+            </table>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
 
 
 def render_opening_cover() -> None:
