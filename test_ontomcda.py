@@ -46,6 +46,8 @@ class OntoMCDATests(unittest.TestCase):
         self.assertLessEqual(result.nlp_metrics["iet_pln"], 100)
         self.assertGreaterEqual(result.nlp_metrics["icl_pln"], 0)
         self.assertLessEqual(result.nlp_metrics["icl_pln"], 100)
+        self.assertGreaterEqual(result.nlp_metrics["ijl_pln"], 0)
+        self.assertLessEqual(result.nlp_metrics["ijl_pln"], 100)
         self.assertEqual(len(result.premise_diagnostics), 10)
         self.assertIn("Diagnostico", result.premise_diagnostics[0])
 
