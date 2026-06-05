@@ -14,7 +14,7 @@ DIAGNOSTIC_GUIDANCE = {
     "tipo_problema": "Declare se o objetivo e escolher, ordenar, classificar ou descrever alternativas.",
     "compensatoriedade": "Declare se ha compensacao, compensacao parcial, veto ou nao compensacao entre criterios.",
     "tipo_variavel": "Informe se os dados sao quantitativos, qualitativos, mistos, fuzzy, grey ou intervalares.",
-    "monotonicidade": "Use pistas como quanto maior melhor, quanto menor melhor, nao monotonico, limiar ou veto.",
+    "monotonicidade": "Use pistas como quanto maior melhor, quanto menor melhor, criterio de custo, criterio de beneficio, faixa ideal ou nao monotonico.",
     "estrutura_decisoria": "Informe se a decisao e individual, coletiva, em grupo, por comite ou por multiplos avaliadores.",
     "completude_pref": "Declare se as preferencias/comparacoes sao completas ou se ha informacao incompleta.",
     "ambiente_decisao": "Informe se o ambiente e de certeza, risco, incerteza, ambiguidade ou dados imprecisos.",
