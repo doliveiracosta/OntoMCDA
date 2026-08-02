@@ -798,14 +798,21 @@ def infer_compensatoriedade_by_rules(text_norm: str) -> tuple[Optional[str], lis
     """
     root = r"(compens\w*|compesn\w*|trade\s*-?\s*off)"
     veto_root = r"(veto|limiar|restricao minima|requisito minimo|criterio eliminatorio)"
-    negative_before = rf"\b(nao|sem|nunca|jamais)\b[\w\s,.;:-]{{0,45}}\b{root}\b"
-    negative_after = rf"\b{root}\b[\w\s,.;:-]{{0,45}}\b(nao|nunca|jamais)\b"
+    negative_patterns = [
+        rf"\bnao\b\s+(?:e\s+)?\b{root}\b",
+        rf"\bsem\b\s+\b{root}\b",
+        rf"\b(?:nao|nunca|jamais)\b\s+(?:permite|admite|aceita|autoriza|possibilita|considera|usa|utiliza|ocorre|ha|existe)\b[\w\s,.;:-]{{0,20}}\b{root}\b",
+        rf"\b{root}\b[\w\s,.;:-]{{0,20}}\b(?:nao|nunca|jamais)\b",
+        rf"\b{root}\b[\w\s,.;:-]{{0,20}}\b(?:proibid\w*|vedad\w*|ausent\w*)\b",
+        rf"\b{root}\b[\w\s,.;:-]{{0,20}}\bnao\b[\w\s,.;:-]{{0,10}}\b(?:permitid\w*|admitid\w*|aceit\w*)\b",
+        rf"\bnao\b[\w\s,.;:-]{{0,10}}\b(?:pode|deve)\b[\w\s,.;:-]{{0,10}}\bser\b[\w\s,.;:-]{{0,10}}\b{root}\b",
+    ]
     partial_near = rf"\b{root}\b[\w\s,.;:-]{{0,45}}\b(parcial\w*|limitad\w*)\b"
     partial_before = rf"\b(parcial\w*|limitad\w*)\b[\w\s,.;:-]{{0,45}}\b{root}\b"
     comp_with_veto = rf"\b{root}\b[\w\s,.;:-]{{0,80}}\b{veto_root}\b|\b{veto_root}\b[\w\s,.;:-]{{0,80}}\b{root}\b"
     compensatory = rf"\b{root}\b"
 
-    negative_match = re.search(negative_before, text_norm) or re.search(negative_after, text_norm)
+    negative_match = next((match for pattern in negative_patterns if (match := re.search(pattern, text_norm))), None)
     if negative_match:
         return "NaoCompensatorio", [f"regra_regex_nao_compensatorio:{negative_match.group(0).strip()}"], 3
 
