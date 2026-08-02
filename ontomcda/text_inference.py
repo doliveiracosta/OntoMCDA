@@ -942,6 +942,59 @@ def infer_ponderabilidade_by_rules(text_norm: str) -> tuple[Optional[str], list[
     return None, [], 0
 
 
+def infer_usa_pesos_by_rules(text_norm: str) -> tuple[Optional[str], list[str], int]:
+    """Infer whether weights are used without assuming they are mandatory."""
+    no_use_patterns = [
+        r"\bsem\b[\w\s,.;:-]{0,15}\bpesos?\b",
+        r"\bnao\b[\w\s,.;:-]{0,15}\b(?:usa|utiliza|considera|emprega|adota)\b[\w\s,.;:-]{0,10}\bpesos?\b",
+        r"\bdispensa\b[\w\s,.;:-]{0,15}\bpesos?\b",
+    ]
+    no_use_match = next((match for pattern in no_use_patterns if (match := re.search(pattern, text_norm))), None)
+    if no_use_match:
+        return "Nao", [f"regra_regex_nao_usa_pesos:{no_use_match.group(0).strip()}"], 3
+
+    use_patterns = [
+        r"\b(?:usa|utiliza|considera|emprega|adota|incorpora)\b[\w\s,.;:-]{0,15}\bpesos?\b",
+        r"\bcom\b[\w\s,.;:-]{0,10}\bpesos?\b",
+        r"\bvetor\b[\w\s,.;:-]{0,10}\bpesos?\b",
+        r"\bcriterios?\b[\w\s,.;:-]{0,15}\bponderad\w*\b",
+        r"\bpesos?\b[\w\s,.;:-]{0,15}\b(?:definid\w*|atribuid\w*|elicitad\w*)\b",
+    ]
+    use_match = next((match for pattern in use_patterns if (match := re.search(pattern, text_norm))), None)
+    if use_match:
+        return "Sim", [f"regra_regex_usa_pesos:{use_match.group(0).strip()}"], 3
+
+    return None, [], 0
+
+
+def infer_requer_pesos_by_rules(text_norm: str) -> tuple[Optional[str], list[str], int]:
+    """Infer whether weights are required as input, distinct from merely using weights."""
+    no_require_patterns = [
+        r"\bnao\b[\w\s,.;:-]{0,15}\b(?:requer|exige|necessita|depende)\b[\w\s,.;:-]{0,10}\bpesos?\b",
+        r"\bpesos?\b[\w\s,.;:-]{0,15}\bnao\b[\w\s,.;:-]{0,10}\b(?:precisam|devem)\b[\w\s,.;:-]{0,10}\bser\b[\w\s,.;:-]{0,10}\binformad\w*\b",
+        r"\bpesos?\b[\w\s,.;:-]{0,15}\b(?:opcionais|facultativos)\b",
+        r"\bdispensa\b[\w\s,.;:-]{0,15}\b(?:entrada|informacao|definicao)?\b[\w\s,.;:-]{0,10}\bpesos?\b",
+    ]
+    no_require_match = next((match for pattern in no_require_patterns if (match := re.search(pattern, text_norm))), None)
+    if no_require_match:
+        return "Nao", [f"regra_regex_nao_requer_pesos:{no_require_match.group(0).strip()}"], 3
+
+    require_patterns = [
+        r"\b(?:requer|exige|necessita|depende)\b[\w\s,.;:-]{0,15}\bpesos?\b",
+        r"\bpesos?\b[\w\s,.;:-]{0,10}\b(?:como|de)\b[\w\s,.;:-]{0,5}\bentrada\b",
+        r"\bpesos?\b[\w\s,.;:-]{0,15}\bdevem\b[\w\s,.;:-]{0,10}\bser\b[\w\s,.;:-]{0,10}\binformad\w*\b",
+        r"\b(?:precisa|necessita)\b[\w\s,.;:-]{0,15}\b(?:informar|fornecer|definir)\b[\w\s,.;:-]{0,10}\bpesos?\b",
+        r"\b(?:informar|fornecer|definir)\b[\w\s,.;:-]{0,10}\bpesos?\b[\w\s,.;:-]{0,15}\bobrigatori\w*\b",
+        r"\bpesos?\b[\w\s,.;:-]{0,10}\bobrigatori\w*\b",
+        r"\bpeso\b[\w\s,.;:-]{0,10}\bcomo\b[\w\s,.;:-]{0,5}\bparametro\b",
+    ]
+    require_match = next((match for pattern in require_patterns if (match := re.search(pattern, text_norm))), None)
+    if require_match:
+        return "Sim", [f"regra_regex_requer_pesos:{require_match.group(0).strip()}"], 3
+
+    return None, [], 0
+
+
 def infer_completude_by_rules(text_norm: str) -> tuple[Optional[str], list[str], int]:
     """Infer preference completeness from textual evidence."""
     incomplete_phrases = [
@@ -1063,20 +1116,25 @@ def infer_premises(text: str) -> tuple[dict[str, Optional[str]], dict[str, list[
         premises["ponderabilidade"] = ponder_value
         evidence_map["ponderabilidade"] = evidence_map["ponderabilidade"] + ponder_evidence
         score_map["ponderabilidade"] = max(score_map["ponderabilidade"], ponder_score)
-        if ponder_value != "NaoPonderavel":
-            premises["usa_pesos"] = premises.get("usa_pesos") or "Sim"
-            premises["requer_pesos"] = premises.get("requer_pesos") or "Sim"
-            score_map["usa_pesos"] = max(score_map["usa_pesos"], 2)
-            score_map["requer_pesos"] = max(score_map["requer_pesos"], 2)
-            evidence_map["usa_pesos"] = evidence_map["usa_pesos"] + ["regra_semantica_pesos"]
-            evidence_map["requer_pesos"] = evidence_map["requer_pesos"] + ["regra_semantica_pesos"]
-        else:
+        if ponder_value == "NaoPonderavel":
             premises["usa_pesos"] = "Nao"
             premises["requer_pesos"] = "Nao"
             score_map["usa_pesos"] = max(score_map["usa_pesos"], 2)
             score_map["requer_pesos"] = max(score_map["requer_pesos"], 2)
             evidence_map["usa_pesos"] = evidence_map["usa_pesos"] + ["regra_semantica_sem_pesos"]
             evidence_map["requer_pesos"] = evidence_map["requer_pesos"] + ["regra_semantica_sem_pesos"]
+
+    use_weights_value, use_weights_evidence, use_weights_score = infer_usa_pesos_by_rules(text_norm)
+    if use_weights_value is not None:
+        premises["usa_pesos"] = use_weights_value
+        evidence_map["usa_pesos"] = use_weights_evidence
+        score_map["usa_pesos"] = max(score_map["usa_pesos"], use_weights_score)
+
+    require_weights_value, require_weights_evidence, require_weights_score = infer_requer_pesos_by_rules(text_norm)
+    if require_weights_value is not None:
+        premises["requer_pesos"] = require_weights_value
+        evidence_map["requer_pesos"] = require_weights_evidence
+        score_map["requer_pesos"] = max(score_map["requer_pesos"], require_weights_score)
 
     comp_value, comp_evidence, comp_score = infer_compensatoriedade_by_rules(text_norm)
     if comp_value is not None:
