@@ -235,6 +235,7 @@ LEXICON: dict[str, dict[str, list[str]]] = {'tipo_problema': {'Escolha': ['escol
                                    'relacao monotonica'],
                     'NaoMonotonico': ['nao monotonico',
                                       'nao linear',
+                                      'veto',
                                       'limiar de preferencia',
                                       'limiar de indiferenca',
                                       'efeito nao monotonico']},
@@ -427,11 +428,6 @@ LEXICON_EXTENSIONS: dict[str, dict[str, list[str]]] = {
             "trade off limitado",
             "admite compensacao com restricoes",
             "ha limiar de veto",
-            "veto parcial",
-            "veto relativo",
-            "limiar de veto parcial",
-            "restricao com tolerancia",
-            "requisito minimo com tolerancia",
         ],
         "NaoCompensatorio": [
             "nao permite compensacao",
@@ -441,10 +437,6 @@ LEXICON_EXTENSIONS: dict[str, dict[str, list[str]]] = {
             "requisito minimo obrigatorio",
             "veto absoluto",
             "um criterio nao anula o outro",
-            "restricao obrigatoria",
-            "condicao eliminatoria",
-            "nao admite substituicao entre criterios",
-            "desempenho ruim nao pode ser compensado",
         ],
     },
     "tipo_variavel": {
@@ -494,46 +486,21 @@ LEXICON_EXTENSIONS: dict[str, dict[str, list[str]]] = {
         "Monotonico": [
             "criterio de beneficio",
             "criterio de custo",
-            "criterio monotonico de beneficio",
-            "criterio monotonico de custo",
             "preferencia crescente",
             "preferencia decrescente",
-            "funcao de preferencia crescente",
-            "funcao de preferencia decrescente",
-            "funcao de beneficio crescente",
-            "funcao de custo decrescente",
             "maior valor e melhor",
             "menor valor e melhor",
-            "maior desempenho e melhor",
-            "menor custo e melhor",
-            "quanto maior o desempenho melhor",
-            "quanto menor o custo melhor",
-            "maximizar desempenho",
-            "minimizar custo",
-            "maximizar beneficio",
-            "minimizar perda",
             "relacao monotonicamente crescente",
             "relacao monotonicamente decrescente",
         ],
         "NaoMonotonico": [
             "faixa ideal",
             "zona ideal",
-            "zona otima",
-            "faixa otima",
-            "intervalo ideal",
-            "ideal entre",
             "valor otimo intermediario",
             "ponto otimo",
-            "ponto de melhor desempenho",
             "ponto de saturacao",
             "preferencia em formato de u",
             "preferencia nao monotona",
-            "nao e crescente",
-            "nao e decrescente",
-            "melhor em valores intermediarios",
-            "piora depois de certo ponto",
-            "aumento nao implica melhora",
-            "reducao nao implica melhora",
         ],
     },
     "estrutura_decisoria": {
@@ -563,11 +530,6 @@ LEXICON_EXTENSIONS: dict[str, dict[str, list[str]]] = {
             "informacao totalmente disponivel",
             "avaliacao completa das alternativas",
             "sem lacunas de informacao",
-            "preferencias sao completas",
-            "comparacoes sao completas",
-            "preferencias totalmente especificadas",
-            "todos os julgamentos foram informados",
-            "matriz de preferencias completa",
         ],
         "Incompleto": [
             "comparacoes faltantes",
@@ -576,10 +538,6 @@ LEXICON_EXTENSIONS: dict[str, dict[str, list[str]]] = {
             "avaliacao incompleta",
             "dados nao informados",
             "nem todos os criterios foram avaliados",
-            "preferencias nao sao completas",
-            "comparacoes nao sao completas",
-            "ha julgamentos faltantes",
-            "matriz de preferencias incompleta",
         ],
     },
     "ambiente_decisao": {
@@ -839,7 +797,7 @@ def infer_compensatoriedade_by_rules(text_norm: str) -> tuple[Optional[str], lis
     spelling mistakes around the compensatory root.
     """
     root = r"(compens\w*|compesn\w*|trade\s*-?\s*off)"
-    veto_root = r"(veto|limiar|restricao minima|restricao obrigatoria|requisito minimo|criterio minimo|condicao minima|criterio eliminatorio)"
+    veto_root = r"(veto|limiar|restricao minima|requisito minimo|criterio eliminatorio)"
     negative_before = rf"\b(nao|sem|nunca|jamais)\b[\w\s,.;:-]{{0,45}}\b{root}\b"
     negative_after = rf"\b{root}\b[\w\s,.;:-]{{0,45}}\b(nao|nunca|jamais)\b"
     partial_near = rf"\b{root}\b[\w\s,.;:-]{{0,45}}\b(parcial\w*|limitad\w*)\b"
@@ -847,25 +805,21 @@ def infer_compensatoriedade_by_rules(text_norm: str) -> tuple[Optional[str], lis
     comp_with_veto = rf"\b{root}\b[\w\s,.;:-]{{0,80}}\b{veto_root}\b|\b{veto_root}\b[\w\s,.;:-]{{0,80}}\b{root}\b"
     compensatory = rf"\b{root}\b"
 
-    if any(
-        phrase in text_norm
-        for phrase in [
-            "veto parcial",
-            "veto relativo",
-            "limiar de veto parcial",
-            "restricao com tolerancia",
-            "requisito minimo com tolerancia",
-        ]
-    ):
-        return "ParcialmenteCompensatorio", ["regra_semantica_veto_parcial"], 3
-    if re.search(negative_before, text_norm) or re.search(negative_after, text_norm):
-        return "NaoCompensatorio", ["regra_regex_nao_compensatorio"], 3
-    if re.search(comp_with_veto, text_norm):
-        return "ParcialmenteCompensatorio", ["regra_regex_compensacao_com_veto"], 3
-    if re.search(partial_near, text_norm) or re.search(partial_before, text_norm):
-        return "ParcialmenteCompensatorio", ["regra_regex_compensacao_parcial"], 3
-    if re.search(compensatory, text_norm):
-        return "Compensatorio", ["regra_regex_compensatorio"], 2
+    negative_match = re.search(negative_before, text_norm) or re.search(negative_after, text_norm)
+    if negative_match:
+        return "NaoCompensatorio", [f"regra_regex_nao_compensatorio:{negative_match.group(0).strip()}"], 3
+
+    veto_match = re.search(comp_with_veto, text_norm)
+    if veto_match:
+        return "ParcialmenteCompensatorio", [f"regra_regex_compensacao_com_veto:{veto_match.group(0).strip()}"], 3
+
+    partial_match = re.search(partial_near, text_norm) or re.search(partial_before, text_norm)
+    if partial_match:
+        return "ParcialmenteCompensatorio", [f"regra_regex_compensacao_parcial:{partial_match.group(0).strip()}"], 3
+
+    compensatory_match = re.search(compensatory, text_norm)
+    if compensatory_match:
+        return "Compensatorio", [f"regra_regex_compensatorio:{compensatory_match.group(0).strip()}"], 2
     if any(
         phrase in text_norm
         for phrase in [
@@ -881,16 +835,7 @@ def infer_compensatoriedade_by_rules(text_norm: str) -> tuple[Optional[str], lis
         ]
     ):
         return "Compensatorio", ["regra_semantica_tradeoff_implicito"], 2
-    if any(
-        phrase in text_norm
-        for phrase in [
-            "criterio eliminatorio",
-            "requisito minimo obrigatorio",
-            "veto absoluto",
-            "restricao obrigatoria",
-            "condicao eliminatoria",
-        ]
-    ):
+    if any(phrase in text_norm for phrase in ["criterio eliminatorio", "requisito minimo obrigatorio", "veto absoluto"]):
         return "NaoCompensatorio", ["regra_semantica_nao_compensatorio"], 3
     return None, [], 0
 
@@ -899,17 +844,9 @@ def infer_monotonicidade_by_rules(text_norm: str) -> tuple[Optional[str], list[s
     """Infer monotonicity from common MCDA wording."""
     non_monotonic_patterns = [
         r"\bnao\b[\w\s,.;:-]{0,35}\bmonotonic\w*",
-        r"\bnao\b[\w\s,.;:-]{0,25}\be\b[\w\s,.;:-]{0,25}\bcrescent\w*",
-        r"\bnao\b[\w\s,.;:-]{0,25}\be\b[\w\s,.;:-]{0,25}\bdecrescent\w*",
-        r"\bnao\b[\w\s,.;:-]{0,35}\bcrescent\w*",
-        r"\bnao\b[\w\s,.;:-]{0,35}\bdecrescent\w*",
         r"\bnao\b[\w\s,.;:-]{0,45}\bimplica\b[\w\s,.;:-]{0,25}\bmelhora\w*",
         r"\baumento\b[\w\s,.;:-]{0,45}\bnao\b[\w\s,.;:-]{0,35}\bmelhora\w*",
         r"\breducao\b[\w\s,.;:-]{0,45}\bnao\b[\w\s,.;:-]{0,35}\bmelhora\w*",
-        r"\b(faixa|zona|intervalo)\b[\w\s,.;:-]{0,35}\b(ideal|otim\w*)\b",
-        r"\b(ideal|otim\w*)\b[\w\s,.;:-]{0,25}\bentre\b",
-        r"\bponto\b[\w\s,.;:-]{0,25}\botim\w*\b",
-        r"\bmelhor\b[\w\s,.;:-]{0,35}\bvalores?\b[\w\s,.;:-]{0,20}\bintermediari\w*\b",
     ]
     if any(re.search(pattern, text_norm) for pattern in non_monotonic_patterns) or any(
         phrase in text_norm
@@ -921,27 +858,13 @@ def infer_monotonicidade_by_rules(text_norm: str) -> tuple[Optional[str], list[s
             "limiar de veto",
             "faixa ideal",
             "zona ideal",
-            "zona otima",
-            "faixa otima",
-            "intervalo ideal",
-            "ideal entre",
             "ponto otimo",
             "valor otimo intermediario",
             "preferencia em formato de u",
-            "melhor em valores intermediarios",
-            "piora depois de certo ponto",
         ]
     ):
         return "NaoMonotonico", ["regra_semantica_nao_monotonico"], 3
 
-    monotonic_patterns = [
-        r"\bquanto\s+maior\b[\w\s,.;:-]{0,60}\bmelhor\b",
-        r"\bquanto\s+menor\b[\w\s,.;:-]{0,60}\bmelhor\b",
-        r"\bmaior\b[\w\s,.;:-]{0,35}\b(melhor|preferivel|desejavel)\b",
-        r"\bmenor\b[\w\s,.;:-]{0,35}\b(melhor|preferivel|desejavel)\b",
-        r"\bmaximiz\w*\b[\w\s,.;:-]{0,35}\b(desempenho|beneficio|valor|qualidade|retorno)\b",
-        r"\bminimiz\w*\b[\w\s,.;:-]{0,35}\b(custo|perda|risco|tempo|prazo)\b",
-    ]
     monotonic_phrases = [
         "quanto maior melhor",
         "quanto maior, melhor",
@@ -951,27 +874,17 @@ def infer_monotonicidade_by_rules(text_norm: str) -> tuple[Optional[str], list[s
         "menos e melhor",
         "criterio beneficio",
         "criterio de beneficio",
-        "criterio monotonico de beneficio",
         "criterio custo",
         "criterio de custo",
-        "criterio monotonico de custo",
         "aumento melhora",
         "reducao melhora",
         "maior valor e melhor",
         "menor valor e melhor",
-        "maior desempenho e melhor",
-        "menor custo e melhor",
         "preferencia crescente",
         "preferencia decrescente",
-        "funcao de preferencia crescente",
-        "funcao de preferencia decrescente",
         "dominancia",
     ]
-    if (
-        any(phrase in text_norm for phrase in monotonic_phrases)
-        or any(re.search(pattern, text_norm) for pattern in monotonic_patterns)
-        or re.search(r"\bmonotonic\w*", text_norm)
-    ):
+    if any(phrase in text_norm for phrase in monotonic_phrases) or re.search(r"\bmonotonic\w*", text_norm):
         return "Monotonico", ["regra_semantica_monotonico"], 3
 
     return None, [], 0
@@ -1024,15 +937,6 @@ def infer_ponderabilidade_by_rules(text_norm: str) -> tuple[Optional[str], list[
 
 def infer_completude_by_rules(text_norm: str) -> tuple[Optional[str], list[str], int]:
     """Infer preference completeness from textual evidence."""
-    incomplete_patterns = [
-        r"\bpreferencias?\b[\w\s,.;:-]{0,35}\bnao\b[\w\s,.;:-]{0,20}\bcomplet\w*",
-        r"\bcomparacoes?\b[\w\s,.;:-]{0,35}\bnao\b[\w\s,.;:-]{0,20}\bcomplet\w*",
-        r"\bjulgamentos?\b[\w\s,.;:-]{0,35}\bfaltant\w*",
-        r"\bmatriz\b[\w\s,.;:-]{0,35}\bincomplet\w*",
-    ]
-    if any(re.search(pattern, text_norm) for pattern in incomplete_patterns):
-        return "Incompleto", ["regra_regex_incompleto"], 3
-
     incomplete_phrases = [
         "preferencias incompletas",
         "informacao incompleta",
@@ -1048,15 +952,6 @@ def infer_completude_by_rules(text_norm: str) -> tuple[Optional[str], list[str],
     ]
     if any(phrase in text_norm for phrase in incomplete_phrases) or "incomplet" in text_norm:
         return "Incompleto", ["regra_semantica_incompleto"], 3
-
-    complete_patterns = [
-        r"\bpreferencias?\b[\w\s,.;:-]{0,35}\bcomplet\w*",
-        r"\bcomparacoes?\b[\w\s,.;:-]{0,35}\bcomplet\w*",
-        r"\btodos?\b[\w\s,.;:-]{0,35}\bjulgamentos?\b[\w\s,.;:-]{0,35}\binformad\w*",
-        r"\bmatriz\b[\w\s,.;:-]{0,35}\bcomplet\w*",
-    ]
-    if any(re.search(pattern, text_norm) for pattern in complete_patterns):
-        return "Completo", ["regra_regex_completo"], 3
 
     complete_phrases = [
         "preferencias completas",
@@ -1179,7 +1074,7 @@ def infer_premises(text: str) -> tuple[dict[str, Optional[str]], dict[str, list[
     comp_value, comp_evidence, comp_score = infer_compensatoriedade_by_rules(text_norm)
     if comp_value is not None:
         premises["compensatoriedade"] = comp_value
-        evidence_map["compensatoriedade"] = evidence_map["compensatoriedade"] + comp_evidence
+        evidence_map["compensatoriedade"] = comp_evidence
         score_map["compensatoriedade"] = max(score_map["compensatoriedade"], comp_score)
 
     return premises, evidence_map, score_map

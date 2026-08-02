@@ -54,8 +54,8 @@ def ontology_match(attr: str, problem_value: Optional[str], method_value: Option
         if method in {"MonoMulti", "Mono_Multi", "MonoMultiDecisor", "Mono/Multi"}:
             return problem in {"Individual", "Grupo"}, str(method)
         return problem == method, str(method)
-    if attr == "compensatoriedade" and problem == "ParcialmenteCompensatorio":
-        return method in {"ParcialmenteCompensatorio", "Compensatorio", "NaoCompensatorio"}, str(method)
+    if attr == "compensatoriedade":
+        return problem == method, str(method)
 
     return problem == method, str(method)
 
