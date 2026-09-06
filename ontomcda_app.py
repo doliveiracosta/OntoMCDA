@@ -10,7 +10,15 @@ from pathlib import Path
 import pandas as pd
 import streamlit as st
 
-from ontomcda.constants import APP_NAME, APP_OWNER_LABEL, APP_SUBTITLE, ATTR_LABELS, OWL_PATH, PREMISE_ATTRS
+from ontomcda.constants import (
+    APP_NAME,
+    APP_OWNER_LABEL,
+    APP_SUBTITLE,
+    ATTR_LABELS,
+    OWL_PATH,
+    PREMISE_ATTRS,
+    PREMISE_GLOSSARY,
+)
 from ontomcda.metrics import build_premise_diagnostics, calculate_operational_nlp_metrics
 from ontomcda.ontology import load_profiles
 from ontomcda.recommender import recommend_methods
@@ -166,6 +174,39 @@ def render_diagnostic_dataframe(diagnostics: list[dict[str, object]]) -> None:
     )
 
 
+def render_premise_glossary() -> None:
+    rows = []
+    for item in PREMISE_GLOSSARY:
+        rows.append(
+            "<tr>"
+            f"<td>{html_escape(item['premissa'])}</td>"
+            f"<td>{html_escape(item['definicao'])}</td>"
+            f"<td>{html_escape(item['valores'])}</td>"
+            f"<td>{html_escape(item['natureza'])}</td>"
+            "</tr>"
+        )
+
+    st.markdown(
+        f"""
+        <details class="premise-glossary" open>
+            <summary>Glossario das premissas decisorias</summary>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Premissa</th>
+                        <th>Definicao operacional</th>
+                        <th>Valores considerados</th>
+                        <th>Natureza</th>
+                    </tr>
+                </thead>
+                <tbody>{''.join(rows)}</tbody>
+            </table>
+        </details>
+        """,
+        unsafe_allow_html=True,
+    )
+
+
 def render_opening_cover() -> None:
     st.markdown(
         """
@@ -215,6 +256,43 @@ def render_opening_cover() -> None:
         }
         .usage-guide li {
             margin-bottom: 0.42rem;
+        }
+        .premise-glossary {
+            margin: 0.65rem 0 1.25rem;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+        .premise-glossary summary {
+            cursor: pointer;
+            color: #374151;
+            font-weight: 700;
+            width: fit-content;
+            list-style: none;
+        }
+        .premise-glossary summary::-webkit-details-marker {
+            display: none;
+        }
+        .premise-glossary table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.75rem;
+            font-size: 0.84rem;
+        }
+        .premise-glossary th {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            color: #111827;
+            font-weight: 700;
+            padding: 7px 8px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        .premise-glossary td {
+            border: 1px solid #e5e7eb;
+            color: #111827;
+            padding: 7px 8px;
+            vertical-align: middle;
+            line-height: 1.35;
         }
         </style>
         """,
@@ -307,6 +385,8 @@ def render_opening_cover() -> None:
             """,
             unsafe_allow_html=True,
         )
+
+    render_premise_glossary()
 
 
 def main() -> None:
