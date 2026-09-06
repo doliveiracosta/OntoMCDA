@@ -57,6 +57,69 @@ ATTR_LABELS = {
     "sugere_pesos": "Sugere pesos",
 }
 
+PREMISE_GLOSSARY = [
+    {
+        "premissa": "Tipo de problema",
+        "definicao": "Finalidade decisoria predominante do problema ou do metodo.",
+        "valores": "Escolha; Ordenacao; Classificacao.",
+        "natureza": "Estrutural",
+    },
+    {
+        "premissa": "Compensatoriedade",
+        "definicao": "Indica se desempenhos inferiores em determinados criterios podem ser compensados por desempenhos superiores em outros criterios.",
+        "valores": "Compensatorio; Parcialmente compensatorio; Nao compensatorio.",
+        "natureza": "Estrutural",
+    },
+    {
+        "premissa": "Tipo de variavel",
+        "definicao": "Caracteriza a natureza das informacoes utilizadas para avaliar as alternativas.",
+        "valores": "Cardinal; Ordinal; Mista; Pseudo-cardinal; Cardinal fuzzy; Cardinal intervalar; Cardinal grey.",
+        "natureza": "Estrutural",
+    },
+    {
+        "premissa": "Monotonicidade",
+        "definicao": "Indica se a preferencia associada a um criterio segue uma direcao definida, como criterio de beneficio ou de custo.",
+        "valores": "Monotonico; Monotonicidade fraca; Nao monotonico.",
+        "natureza": "Estrutural",
+    },
+    {
+        "premissa": "Estrutura decisoria",
+        "definicao": "Representa a configuracao dos participantes do processo decisorio.",
+        "valores": "Monodecisor; Multidecisor; Mono/Multi.",
+        "natureza": "Estrutural",
+    },
+    {
+        "premissa": "Completude das preferencias",
+        "definicao": "Indica se o metodo exige preferencias integralmente definidas ou admite informacao parcial, incompleta ou progressiva.",
+        "valores": "Completa; Incompleta.",
+        "natureza": "Estrutural",
+    },
+    {
+        "premissa": "Ambiente de decisao",
+        "definicao": "Caracteriza o grau de conhecimento disponivel sobre dados, consequencias e cenarios do problema decisorio.",
+        "valores": "Certeza; Risco; Incerteza.",
+        "natureza": "Estrutural",
+    },
+    {
+        "premissa": "Ponderabilidade",
+        "definicao": "Indica se o metodo admite, depende ou dispensa a atribuicao de importancia relativa aos criterios.",
+        "valores": "Ponderavel; Parcialmente ponderavel; Nao ponderavel.",
+        "natureza": "Estrutural",
+    },
+    {
+        "premissa": "Usa pesos",
+        "definicao": "Indica se pesos dos criterios participam do procedimento decisorio, ainda que sejam obtidos de modo direto, indireto, endogeno ou implicito.",
+        "valores": "Sim; Nao.",
+        "natureza": "Operacional",
+    },
+    {
+        "premissa": "Requer pesos",
+        "definicao": "Indica se o metodo exige pesos explicitos como entrada para sua aplicacao.",
+        "valores": "Sim; Nao.",
+        "natureza": "Operacional",
+    },
+]
+
 ATTR_WEIGHTS = {
     "tipo_problema": 4.0,
     "compensatoriedade": 3.5,

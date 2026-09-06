@@ -4,13 +4,20 @@ from __future__ import annotations
 
 import base64
 import mimetypes
-from html import escape as html_escape
 from pathlib import Path
 
 import pandas as pd
 import streamlit as st
 
-from ontomcda.constants import APP_NAME, APP_OWNER_LABEL, APP_SUBTITLE, ATTR_LABELS, OWL_PATH, PREMISE_ATTRS
+from ontomcda.constants import (
+    APP_NAME,
+    APP_OWNER_LABEL,
+    APP_SUBTITLE,
+    ATTR_LABELS,
+    OWL_PATH,
+    PREMISE_ATTRS,
+    PREMISE_GLOSSARY,
+)
 from ontomcda.metrics import build_premise_diagnostics, calculate_operational_nlp_metrics
 from ontomcda.ontology import load_profiles
 from ontomcda.recommender import recommend_methods
@@ -52,115 +59,40 @@ def fallback_premise_diagnostics(result: object) -> list[dict[str, object]]:
     return build_premise_diagnostics(premises, evidence, score_map)
 
 
-def refresh_jaccard_metric_if_needed(metrics: dict, text: str, result: object) -> dict:
-    """Backfill IJL-PLN when an older recommender result did not pass Jaccard scores."""
-    if float(metrics.get("ijl_pln", 0.0) or 0.0) > 0:
-        return metrics
-
-    evidence = getattr(result, "evidence", {}) or {}
-    if not any(evidence.get(attr) for attr in PREMISE_ATTRS):
-        return metrics
-
-    try:
-        from ontomcda.text_inference import jaccard_scores_by_premise
-    except (ImportError, AttributeError):
-        return metrics
-
-    jaccard_map = jaccard_scores_by_premise(text)
-    if not jaccard_map:
-        return metrics
-
-    refreshed = dict(metrics)
-    refreshed["ijl_pln"] = round(sum(float(jaccard_map.get(attr, 0.0)) for attr in PREMISE_ATTRS) / len(PREMISE_ATTRS), 2)
-    return refreshed
-
-
-def lexical_score_bar(value: object) -> str:
-    try:
-        score = max(0.0, min(3.0, float(value)))
-    except (TypeError, ValueError):
-        score = 0.0
-
-    colors = {
-        0: "#dc2626",
-        1: "#f97316",
-        2: "#ca8a04",
-        3: "#16a34a",
-    }
-    color = colors[int(round(score))]
-    width = max(6, int((score / 3.0) * 100))
-    return (
-        '<div style="display:grid; grid-template-columns:minmax(95px, 1fr) 26px; '
-        'align-items:center; gap:8px; min-width:145px;">'
-        '<div style="height:14px; background:linear-gradient(90deg, #fee2e2, #ffedd5, #dcfce7); '
-        'border-radius:999px; overflow:hidden; box-shadow:inset 0 0 0 1px rgba(17, 24, 39, 0.16);">'
-        f'<div style="height:100%; width:{width}%; background:{color}; border-radius:999px;"></div>'
-        "</div>"
-        f'<span style="font-weight:700; color:#111827; text-align:right;">{score:.0f}</span>'
-        "</div>"
-    )
-
-
 def render_diagnostic_dataframe(diagnostics: list[dict[str, object]]) -> None:
     df = pd.DataFrame(diagnostics)
-    df = df.drop(columns=["Diagnostico", "Problema predominante"], errors="ignore")
-    if "Escore lexical" not in df.columns:
-        st.dataframe(df, use_container_width=True, hide_index=True)
-        return
+    df = df.drop(columns=["Escore lexical"], errors="ignore")
+    st.dataframe(df, use_container_width=True, hide_index=True)
 
-    columns = list(df.columns)
-    header = "".join(f"<th>{html_escape(str(column))}</th>" for column in columns)
+
+def render_premise_glossary() -> None:
     rows = []
-    for _, row in df.iterrows():
-        cells = []
-        for column in columns:
-            if column == "Escore lexical":
-                cells.append(f"<td>{lexical_score_bar(row[column])}</td>")
-            else:
-                cells.append(f"<td>{html_escape(str(row[column]))}</td>")
-        rows.append(f"<tr>{''.join(cells)}</tr>")
+    for item in PREMISE_GLOSSARY:
+        rows.append(
+            "<tr>"
+            f"<td>{html_escape(item['premissa'])}</td>"
+            f"<td>{html_escape(item['definicao'])}</td>"
+            f"<td>{html_escape(item['valores'])}</td>"
+            f"<td>{html_escape(item['natureza'])}</td>"
+            "</tr>"
+        )
 
     st.markdown(
         f"""
-        <style>
-        .premise-diagnostic-table-wrap {{
-            width: 100%;
-            overflow-x: auto;
-            border: 1px solid #e5e7eb;
-            border-radius: 7px;
-        }}
-        .premise-diagnostic-table {{
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 0.88rem;
-        }}
-        .premise-diagnostic-table th {{
-            background: #f3f4f6;
-            color: #6b7280;
-            font-weight: 500;
-            text-align: left;
-            padding: 9px 10px;
-            border-bottom: 1px solid #e5e7eb;
-            white-space: nowrap;
-        }}
-        .premise-diagnostic-table td {{
-            color: #111827;
-            padding: 8px 10px;
-            border-bottom: 1px solid #e5e7eb;
-            border-right: 1px solid #e5e7eb;
-            vertical-align: middle;
-            white-space: nowrap;
-        }}
-        .premise-diagnostic-table tr:last-child td {{
-            border-bottom: 0;
-        }}
-        </style>
-        <div class="premise-diagnostic-table-wrap">
-            <table class="premise-diagnostic-table">
-                <thead><tr>{header}</tr></thead>
+        <details class="premise-glossary" open>
+            <summary>Glossario das premissas decisorias</summary>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Premissa</th>
+                        <th>Definicao operacional</th>
+                        <th>Valores considerados</th>
+                        <th>Natureza</th>
+                    </tr>
+                </thead>
                 <tbody>{''.join(rows)}</tbody>
             </table>
-        </div>
+        </details>
         """,
         unsafe_allow_html=True,
     )
@@ -215,6 +147,43 @@ def render_opening_cover() -> None:
         }
         .usage-guide li {
             margin-bottom: 0.42rem;
+        }
+        .premise-glossary {
+            margin: 0.65rem 0 1.25rem;
+            color: #374151;
+            font-size: 0.9rem;
+        }
+        .premise-glossary summary {
+            cursor: pointer;
+            color: #374151;
+            font-weight: 700;
+            width: fit-content;
+            list-style: none;
+        }
+        .premise-glossary summary::-webkit-details-marker {
+            display: none;
+        }
+        .premise-glossary table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 0.75rem;
+            font-size: 0.84rem;
+        }
+        .premise-glossary th {
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            color: #111827;
+            font-weight: 700;
+            padding: 7px 8px;
+            text-align: left;
+            vertical-align: middle;
+        }
+        .premise-glossary td {
+            border: 1px solid #e5e7eb;
+            color: #111827;
+            padding: 7px 8px;
+            vertical-align: middle;
+            line-height: 1.35;
         }
         </style>
         """,
@@ -308,6 +277,8 @@ def render_opening_cover() -> None:
             unsafe_allow_html=True,
         )
 
+    render_premise_glossary()
+
 
 def main() -> None:
     st.set_page_config(page_title=APP_NAME, layout="wide")
@@ -343,8 +314,7 @@ def main() -> None:
     st.divider()
     st.subheader("Metricas quantitativas do PLN")
     metrics = getattr(result, "nlp_metrics", fallback_nlp_metrics(result))
-    metrics = refresh_jaccard_metric_if_needed(metrics, st.session_state.get("ontomcda_text", text), result)
-    metric_cols = st.columns(6)
+    metric_cols = st.columns(5)
     metric_cols[0].metric("ICS-PLN", f"{float(metrics['ics_pln']):.1f}%")
     metric_cols[1].metric(
         "Premissas inferidas",
@@ -353,13 +323,11 @@ def main() -> None:
     metric_cols[2].metric("TNI-PLN", f"{float(metrics['tni_pln']):.1f}%")
     metric_cols[3].metric("IET-PLN", f"{float(metrics['iet_pln']):.1f}%")
     metric_cols[4].metric("ICL-PLN", f"{float(metrics.get('icl_pln', 0.0)):.1f}%")
-    metric_cols[5].metric("IJL-PLN", f"{float(metrics.get('ijl_pln', 0.0)):.1f}%")
     st.caption(
         "ICS-PLN = indice de cobertura semantica das premissas inferidas. "
         "TNI-PLN = taxa de premissas nao inferidas. "
         "IET-PLN = indice de evidencias textuais rastreaveis. "
-        "ICL-PLN = confianca lexical media normalizada das premissas inferidas. "
-        "IJL-PLN = similaridade Jaccard lexical media entre texto e vocabulario controlado."
+        "ICL-PLN = confianca lexical media normalizada das premissas inferidas."
     )
     diagnostics = getattr(result, "premise_diagnostics", fallback_premise_diagnostics(result))
     with st.expander("Diagnostico por premissa para melhoria do PLN", expanded=True):
