@@ -175,32 +175,23 @@ def render_diagnostic_dataframe(diagnostics: list[dict[str, object]]) -> None:
 
 
 def render_premise_glossary() -> None:
-    rows = []
+    items = []
     for item in PREMISE_GLOSSARY:
-        rows.append(
-            "<tr>"
-            f"<td>{html_escape(item['premissa'])}</td>"
-            f"<td>{html_escape(item['definicao'])}</td>"
-            f"<td>{html_escape(item['valores'])}</td>"
-            f"<td>{html_escape(item['natureza'])}</td>"
-            "</tr>"
+        items.append(
+            '<li class="premise-item">'
+            f"<strong>{html_escape(item['premissa'])}</strong>"
+            f"<span>{html_escape(item['definicao'])}</span>"
+            f'<small>Valores: {html_escape(item["valores"])} | Natureza: {html_escape(item["natureza"])}</small>'
+            "</li>"
         )
 
     st.markdown(
         f"""
-        <details class="premise-glossary" open>
+        <details class="usage-guide premise-guide">
             <summary>Glossario das premissas decisorias</summary>
-            <table>
-                <thead>
-                    <tr>
-                        <th>Premissa</th>
-                        <th>Definicao operacional</th>
-                        <th>Valores considerados</th>
-                        <th>Natureza</th>
-                    </tr>
-                </thead>
-                <tbody>{''.join(rows)}</tbody>
-            </table>
+            <ol class="premise-list">
+                {''.join(items)}
+            </ol>
         </details>
         """,
         unsafe_allow_html=True,
@@ -257,42 +248,30 @@ def render_opening_cover() -> None:
         .usage-guide li {
             margin-bottom: 0.42rem;
         }
-        .premise-glossary {
-            margin: 0.65rem 0 1.25rem;
-            color: #374151;
-            font-size: 0.9rem;
+        .premise-guide {
+            margin-top: -0.55rem;
         }
-        .premise-glossary summary {
-            cursor: pointer;
-            color: #374151;
-            font-weight: 700;
-            width: fit-content;
-            list-style: none;
+        .premise-list {
+            margin: 0.75rem 0 0;
+            padding-left: 1.25rem;
+            line-height: 1.42;
         }
-        .premise-glossary summary::-webkit-details-marker {
-            display: none;
+        .premise-item {
+            margin-bottom: 0.55rem;
         }
-        .premise-glossary table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 0.75rem;
-            font-size: 0.84rem;
-        }
-        .premise-glossary th {
-            background: #f3f4f6;
-            border: 1px solid #d1d5db;
+        .premise-item strong {
+            display: block;
             color: #111827;
             font-weight: 700;
-            padding: 7px 8px;
-            text-align: left;
-            vertical-align: middle;
         }
-        .premise-glossary td {
-            border: 1px solid #e5e7eb;
-            color: #111827;
-            padding: 7px 8px;
-            vertical-align: middle;
-            line-height: 1.35;
+        .premise-item span {
+            display: block;
+            color: #374151;
+        }
+        .premise-item small {
+            display: block;
+            color: #6b7280;
+            margin-top: 0.12rem;
         }
         </style>
         """,
@@ -333,6 +312,7 @@ def render_opening_cover() -> None:
         """,
         unsafe_allow_html=True,
     )
+    render_premise_glossary()
 
     st.title(APP_NAME)
     st.markdown(f"### {APP_SUBTITLE}")
@@ -385,8 +365,6 @@ def render_opening_cover() -> None:
             """,
             unsafe_allow_html=True,
         )
-
-    render_premise_glossary()
 
 
 def main() -> None:
