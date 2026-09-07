@@ -289,34 +289,25 @@ def main() -> None:
         missing = ", ".join(ATTR_LABELS.get(attr, attr) for attr in result.missing_mandatory)
         st.warning(f"Nao foi possivel inferir premissas obrigatorias: {missing}. Reforce a descricao textual.")
 
-    st.divider()
-    st.subheader("Metricas quantitativas do PLN")
     metrics = getattr(result, "nlp_metrics", fallback_nlp_metrics(result))
-    metric_cols = st.columns(5)
-    metric_cols[0].metric("ICS-PLN", f"{float(metrics['ics_pln']):.1f}%")
-    metric_cols[1].metric(
-        "Premissas inferidas",
-        f"{int(metrics['inferred_premises'])}/{int(metrics['total_premises'])}",
-    )
-    metric_cols[2].metric("TNI-PLN", f"{float(metrics['tni_pln']):.1f}%")
-    metric_cols[3].metric("IET-PLN", f"{float(metrics['iet_pln']):.1f}%")
-    metric_cols[4].metric("ICL-PLN", f"{float(metrics.get('icl_pln', 0.0)):.1f}%")
-    st.caption(
-        "ICS-PLN = indice de cobertura semantica das premissas inferidas. "
-        "TNI-PLN = taxa de premissas nao inferidas. "
-        "IET-PLN = indice de evidencias textuais rastreaveis. "
-        "ICL-PLN = confianca lexical media normalizada das premissas inferidas."
-    )
     diagnostics = getattr(result, "premise_diagnostics", fallback_premise_diagnostics(result))
-    with st.expander("Diagnostico por premissa para melhoria do PLN", expanded=True):
-        render_diagnostic_dataframe(diagnostics)
 
     st.divider()
+    st.subheader("Resultado da recomendacao")
     summary_cols = st.columns(3)
     summary_cols[0].metric("Metodos recomendados", len(result.accepted))
     summary_cols[1].metric("Restricoes fortes violadas", len(result.rejected))
     top_score = 0.0 if result.accepted.empty else float(result.accepted.iloc[0]["Aderencia(%)"])
     summary_cols[2].metric("Maior aderencia", f"{top_score:.1f}%")
+
+    st.subheader("Metodos recomendados")
+    if result.accepted.empty:
+        st.info("Nenhum metodo recomendado para as premissas atuais.")
+    else:
+        st.dataframe(result.accepted, use_container_width=True, hide_index=True)
+
+    st.divider()
+    st.subheader("Fundamentacao da recomendacao")
 
     st.subheader("Premissas inferidas")
     premise_rows = []
@@ -332,11 +323,25 @@ def main() -> None:
         )
     st.dataframe(pd.DataFrame(premise_rows), use_container_width=True, hide_index=True)
 
-    st.subheader("Metodos recomendados")
-    if result.accepted.empty:
-        st.info("Nenhum metodo recomendado para as premissas atuais.")
-    else:
-        st.dataframe(result.accepted, use_container_width=True, hide_index=True)
+    st.subheader("Metricas quantitativas do PLN")
+    metric_cols = st.columns(5)
+    metric_cols[0].metric("ICS-PLN", f"{float(metrics['ics_pln']):.1f}%")
+    metric_cols[1].metric(
+        "Premissas inferidas",
+        f"{int(metrics['inferred_premises'])}/{int(metrics['total_premises'])}",
+    )
+    metric_cols[2].metric("TNI-PLN", f"{float(metrics['tni_pln']):.1f}%")
+    metric_cols[3].metric("IET-PLN", f"{float(metrics['iet_pln']):.1f}%")
+    metric_cols[4].metric("ICL-PLN", f"{float(metrics.get('icl_pln', 0.0)):.1f}%")
+    st.caption(
+        "ICS-PLN = indice de cobertura semantica das premissas inferidas. "
+        "TNI-PLN = taxa de premissas nao inferidas. "
+        "IET-PLN = indice de evidencias textuais rastreaveis. "
+        "ICL-PLN = confianca lexical media normalizada das premissas inferidas."
+    )
+
+    with st.expander("Diagnostico por premissa para melhoria do PLN", expanded=True):
+        render_diagnostic_dataframe(diagnostics)
 
     with st.expander("Metodos rejeitados por restricoes fortes"):
         if result.rejected.empty:
